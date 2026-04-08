@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Prosperon</title>
+    <link rel="stylesheet" href="styles/global.css" />
+    <link rel="stylesheet" href="styles/layout.css" />
+    <link rel="stylesheet" href="styles/pages/styles.css" />
+  </head>
+  <body>
+    <div id="header-container"></div>
+    <div id="sidebar-container"></div>
+    <main id="main-content" class="main">
+      <div class="dashboard-overview">
+        <section class="transactions-chart-section">
+          <h2>Monthly Transactions</h2>
+          <canvas class="dashboard-chart" id="dashboardChart"></canvas>
+        </section>
+        <section class="goals-section">
+          <h2>Goals</h2>
+          <table class="goals-table">
+            <thead>
+              <tr>
+                <th>Goal</th>
+                <th>Target Amount</th>
+                <th>Current Amount</th>
+              </tr>
+            </thead>
+            <tbody id="goalsTableBody">
+              <!-- Goals will be dynamically inserted here -->
+            </tbody>
+          </table>
+        </section>
+      </div>
+
+      <div class="dashboard-seperator">
+        <section class="recent-transactions-section">
+          <h2>Recent Transactions</h2>
+          <table class="transactions-table">
+            <thead >
+              <tr id="transactionsTableHeadRow">
+                <th>Date</th>
+                <th>Type</th>
+                <th>Amount</th>
+                
+              </tr>
+            </thead>
+            <tbody id="transactionsTableBody">
+              <!-- Transactions will be dynamically inserted here -->
+            </tbody>
+          </table>
+        </section>
+        <section class="total-section">
+          <h2>Total:</h2>
+          <p id="totalAmount">0.00</p>
+        </section>
+      </div>
+    </main>
+
+    <div class="footer-container" id="footer-container"></div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="scripts/includes.js"></script>
+    <script src="scripts/main.js" type="module"></script>
+    <script src="scripts/pages/dashboard.page.js" type="module"></script>
+  </body>
+</html>

@@ -1,0 +1,336 @@
+.main {
+  display: flex;
+  justify-content: space-between;
+  //align-items: center;
+  padding: 20px;
+  height: calc(87vh - 2rem);
+  gap: 20px;
+}
+
+.section-divider {
+  width: 40%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: auto;
+  gap: 10px;
+}
+
+.savings-overview-section {
+  width: 100%;
+  height: 30%;
+  background-color: var(--bg);
+  //padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.savings-overview-section h2 {
+  margin-bottom: 10px;
+  font-size: 1.5rem;
+ 
+}
+
+.savings-overview-section p {
+  margin-bottom: 5px;
+  font-size: 2rem;
+  color: var(--text-muted);
+}
+
+.total-earned {
+  color: var(--text);
+}
+
+.total-desired {
+  font-size: 1.5rem;
+}
+
+.savings-chart-section {
+  width: 100%;
+  height: 70%;
+  background-color: var(--bg);
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  object-fit: contain;
+}
+
+.savings-chart-section canvas {
+  width: 100%;
+  height: 100%;
+  max-width: 350px;
+  max-height: 350px;
+}
+
+.savings-chart-section h2 {
+  text-align: center;
+}
+
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.primary {
+  background-color: var(--primary);
+  color: #fff;
+}
+
+.goals-section {
+  width: 60%;
+  height: 100%;
+  background-color: var(--bg);
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.goals-section div {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.goals-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.goals-table th,
+.goals-table td {
+  padding: 10px 20px;
+ // border-left: 1px solid var(--primary);
+}
+
+.goals-table td:even {
+  background-color: var(--background);
+}
+
+.goals-table th {
+  background-color: var(--secondary);
+  text-align: center;
+}
+
+.goals-table td {
+  text-align: center;
+}
+
+.goals-table td div {
+  display: flex;
+  justify-content: space-evenly;
+}
+
+.action-btn {
+  padding: .3rem .6rem;
+  border: 1px solid;
+  margin: 0.2rem 0;
+  border-radius: 0.7rem;
+  background-color: transparent;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.changeFunds {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.changeFunds:hover {
+  background-color: var(--primary);
+  color: var(--text);
+}
+
+.edit {
+  border-color: var(--secondary);
+  color: var(--secondary);
+}
+.edit:hover {
+  background-color: var(--secondary);
+  color: var(--text);
+}
+
+.delete {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.delete:hover {
+  background-color: var(--danger);
+  color: var(--text);
+}
+
+.progress-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 120px;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 20px;
+  border-radius: 10px;
+  background: var(--border-muted);
+  overflow: hidden;
+  appearance: none;
+}
+
+.progress-bar::-webkit-progress-bar {
+  background: var(--border-muted);
+  border-radius: 10px;
+}
+
+.progress-bar::-webkit-progress-value {
+  background: var(--primary);
+  border-radius: 10px;
+  transition: width 0.3s ease;
+}
+
+.progress-bar::-moz-progress-bar {
+  background: var(--primary);
+  border-radius: 10px;
+}
+
+.progress-text {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  min-width: 40px;
+}
+
+.completed-goal-message {
+  position: fixed;
+  z-index: 1000;
+  top: 20px;
+  right: 3%;
+  transform: translateX(1500%);
+  width: 325px;
+  height: 100px;
+  border-radius: 30px;
+  background-color: var(--bg-light);
+  border-left: 1px solid var(--primary);
+  border-bottom: 1px solid var(--primary);
+  border-top: 1px solid var(--secondary);
+  border-right: 1px solid var(--secondary);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  display: none;
+  padding: 20px;
+  transition: transform 0.5s ease-in-out;
+}
+
+.completed-goal-message .celebration-icon {
+  font-size: 2.5rem;
+  margin-right: 15px;
+}
+
+.completed-goal-message .boldText {
+  font-weight: bold;
+  color: var(--text-muted);
+  display: block;
+  font-size: 1.2rem;
+}
+
+.completed-goal-message p {
+  font-size: 1rem;
+  color: var(--text);
+  position: absolute;
+  top: 20%;
+  left: 25%;
+}
+
+/* MEDIA QUERIES */
+
+@media (min-width: 1000px) {
+
+  .savings-chart-section canvas {
+    max-width: 350px;
+    max-height: 350px;
+  }
+
+  .savings-chart-section {
+    padding: 1rem;
+  }
+
+  .savings-overview-section p {
+    font-size: 2rem;
+  }
+
+}
+
+@media (min-width: 320px) and (max-width: 1000px) {
+
+  #header-container, #footer-container {
+    width: 100%;
+    object-fit: cover;
+  }
+
+  #footer-container {
+    margin-top: 2rem;
+  }
+
+  .main {
+    flex-direction: column;
+    align-items: center;
+    height: auto;
+    width: 100vw;
+    padding: 0.5rem;
+     gap: 1rem;
+  }
+
+  .section-divider {
+    width: 100%;
+    height: auto;
+    order: 2;
+  }
+
+  .savings-overview-section,
+  .savings-chart-section,
+  .goals-section {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    padding: 1rem;
+  }
+
+  .savings-overview-section  {
+    order: 1;
+    margin-bottom: 1.5rem;
+  }
+
+  .savings-overview-section h2 {
+    font-size: 1.2rem;
+  }
+
+
+
+  .savings-chart-section canvas {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .goals-table th, .goals-table td {
+    padding: 0.3rem;
+    font-size: 0.9rem;
+  }
+
+  .edit, .delete, .changeFunds {
+    padding: 0.2rem 0.4rem;
+    font-size: 0.8rem;
+  }
+ 
+}

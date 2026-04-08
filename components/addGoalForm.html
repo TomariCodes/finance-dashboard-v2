@@ -1,0 +1,40 @@
+<form id="addGoalForm" class="add-goal-form">
+  <div>
+    <label for="goalName" class="form-label">Goal Name: </label>
+    <input
+      type="text"
+      class="form-control"
+      id="goalName"
+      placeholder="Enter goal name"
+    />
+    <p class="statusText" id="goalNameStatus"></p>
+  </div>
+
+  
+  <div>
+    <label for="startingAmount" class="form-label"
+      >Starting Amount (Optional):
+    </label>
+    <input
+    type="number"
+    class="form-control"
+    id="startingAmount"
+    step="0.01"
+    placeholder="Enter starting amount"
+      />
+    </div>
+    
+    <div>
+    <label for="targetAmount" class="form-label">Target Amount: </label>
+      <input
+        type="number"
+        class="form-control"
+        id="targetAmount"
+        step="0.01"
+        placeholder="Enter target amount"
+      />
+      <p class="statusText" id="targetAmountStatus"></p>
+    </div>
+
+  <button type="submit" class="btn btn-primary">Add Goal</button>
+</form>

@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Prosperon</title>
+    <link rel="stylesheet" href="styles/global.css" />
+    <link rel="stylesheet" href="styles/layout.css" />
+    <link rel="stylesheet" href="styles/pages/settings.css" />
+  </head>
+  <body>
+    <div id="header-container"></div>
+    <div id="sidebar-container"></div>
+    <div class="settings-message" id="settingsMessageContainer">
+      <span id="functionIcon" class="function-icon"></span>
+      <p id="settingsMessage"></p>
+    </div>
+    <main id="main-content" class="main">
+      <section class="transactions-settings-section" id="transactionsSettings">
+        <h2>Transaction Settings</h2>
+        <ul id="transactionsList">
+          <li id="recurringTransactions" tabindex="0">
+            Recurring Transactions
+          </li>
+          <li tabindex="0" id="allTransactionHistory">All Transaction History</li>
+          <li tabindex="0" id="allTransactionCategories">Transaction Categories</li>
+          <li tabindex="0" id="deleteAllTransactions">
+            Delete All Transactions
+          </li>
+        </ul>
+      </section>
+      <section class="savings-settings-section" id="goalsSettings">
+        <h2>Savings Settings</h2>
+        <ul id="goalsList">
+          <li tabindex="0" id="completedGoals">Completed Goals</li>
+          <li tabindex="0" id="goalTransactionHistory">Goal Transaction History</li>
+          <li tabindex="0" id="goalCategories">Goal Categories</li>
+          <li tabindex="0" id="deleteAllGoals">Delete All Goals</li>
+        </ul>
+      </section>
+      <div class="settings-seperator">
+        <section class="investments-settings-section" id="investmentSettings">
+          <h2>Investment Settings</h2>
+          <ul id="investmentsList">
+            <li tabindex="0" id="investmentCompanies">Investment Companies</li>
+            <li tabindex="0" id="investmentTransactionHistory">Investment Transaction History</li>
+            <li tabindex="0" id="investmentCategories">Investment Categories</li>
+            <li tabindex="0" id="deleteAllCompanies">Delete All Companies</li>
+          </ul>
+        </section>
+        <section class="factory-settings-section">
+          <h2>Factory Settings</h2>
+          <ul>
+            <li tabindex="0" id="saveDB">Save</li>
+            <li tabindex="0" id="deleteAllData">Delete All Data</li>
+          </ul>
+        </section>
+      </div>
+    </main>
+
+    <div class="footer-container" id="footer-container"></div>
+
+        <div class="modal" id="appModal" aria-hidden="true">
+      <div class="modal__backdrop" data-modal-close></div>
+
+      <div
+        class="modal__panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="settingsTitle"
+        aria-describedby="settingsTitle"
+      >
+        <header class="modal__header">
+          <h2 id="settingsTitle">Settings</h2>
+          <button
+            class="modal__close"
+            data-modal-close
+            aria-label="Close Modal"
+          >
+            &times;
+          </button>
+        </header>
+
+        <div class="modal__content" id="settingsModalBody"></div>
+      </div>
+    </div>
+    <script src="scripts/includes.js"></script>
+    <script src="scripts/main.js" type="module"></script>
+    <script src="scripts/core/storage.js" type="module"></script>
+    <script src="scripts/ui/settingsModal.js" type="module"></script>
+    <script src="scripts/core/settingsStore.js" type="module"></script>
+    <script src="scripts/pages/settings.page.js" type="module"></script>
+    <script src="scripts/ui/modal.js" type="module"></script>
+  </body>
+</html>

@@ -1,0 +1,70 @@
+<form
+  id="addTransactionForm"
+  class="add-transaction-form"
+>
+  <div class="mb-3">
+    <label for="type" class="form-label">Type:</label>
+    <select class="form-control" id="type">
+      <option default value="">Select type</option>
+      <option value="Income">Income</option>
+      <option value="Expense">Expense</option>
+      <option value="Bill">Bill</option>
+      <option value="Savings">Savings</option>
+      <option value="Investment">Investment</option>
+    </select>
+    <p class="statusText" id="typeStatus"></p>
+  </div>
+  <div class="mb-3">
+    <label for="date" class="form-label">Date:</label>
+    <input type="date" class="form-control" id="date" />
+    <p class="statusText" id="dateStatus"></p>
+  </div>
+  <div class="mb-3">
+    <label for="category" class="form-label">Category:</label>
+    <select class="form-control" id="category">
+      <option default value="">Select category</option>
+      <option value="food">Food & Groceries</option>
+      <option value="entertainment">Entertainment</option>
+      <option value="util">Utilities & Bills</option>
+      <option value="income">Gift</option>
+      <option value="savings">Salary</option>
+      <option value="misc">Misc</option>
+    </select>
+    <p class="statusText" id="categoryStatus"></p>
+  </div>
+  <div class="mb-3">
+    <label for="description" class="form-label">Description:</label>
+    <input
+      type="text"
+      class="form-control"
+      id="description"
+      placeholder="Enter description"
+    />
+    <p class="statusText" id="descriptionStatus"></p>
+  </div>
+  <div class="mb-3">
+    <label for="amount" class="form-label">Amount:</label>
+    <input
+      type="number"
+      class="form-control"
+      id="amount"
+      step="0.01"
+      placeholder="Enter amount"
+    />
+    <p class="statusText nowrap" id="amountStatus"></p>
+  </div>
+  <div class="mb-3">
+    <label for="recurrence" class="form-label">Recurrence:</label>
+    <select class="form-control" id="recurrence">
+      <option default value="">None</option>
+      <option value="daily">Daily</option>
+      <option value="weekly">Weekly</option>
+      <option value="biweekly">Biweekly</option>
+      <option value="monthly">Monthly</option>
+      <option value="yearly">Yearly</option>
+    </select>
+    <p class="statusText" id="recurrenceStatus"></p>
+  </div>
+  <div  class="mb-3 extras" id="extras"></div>
+  <button type="submit" class="btn btn-primary">Add Transaction</button>
+</form>

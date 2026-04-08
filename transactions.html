@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Transactions</title>
+    <link rel="stylesheet" href="styles/global.css" />
+    <link rel="stylesheet" href="styles/layout.css" />
+    <link rel="stylesheet" href="styles/pages/transactions.css" />
+  </head>
+  <body>
+    <div id="header-container"></div>
+    <div id="sidebar-container"></div>
+
+    <main class="main">
+      <section class="transactions-section">
+        <h1>Transactions</h1>
+        <div class="transactions-actions">
+          <div class="searchTransactions">
+            <label class="nowrap" for="search">Search Transactions:</label>
+            <input
+              type="text"
+              id="search"
+              class="search"
+              name="search"
+              placeholder="description, type, amount, category..."
+            />
+          </div>
+          <div class="changeTransactions">
+            <div class="filterTransactions">
+              <label class="nowrap" for="filter">Sort By:</label>
+              <select class="filter" id="filter" name="filter">
+                <option value="">Default</option>
+                <option value="dateAsc">Date Ascending</option>
+                <option value="dateDesc">Date Descending</option>
+                <option value="amountAsc">Amount +</option>
+                <option value="amountDesc">Amount -</option>
+                <option value="typeAsc">Type: A-Z</option>
+                <option value="typeDesc">Type: Z-A</option>
+              </select>
+            </div>
+
+            <button id="addTransactionBtn" class="btn">Add Transaction</button>
+          </div>
+        </div>
+        <table class="transactions-table">
+          <thead>
+            <tr id="transactionsTableHeadRow">
+              <th>Date</th>
+              <th>Type</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody id="transactionsTableBody">
+            <!-- Transactions will be dynamically inserted here -->
+          </tbody>
+        </table>
+      </section>
+      <section class="chart-section-container">
+        <div class="filterChart-section">
+          <label for="filterChart">Filter Charts By:</label>
+          <select class="filterChart" id="filterChart" name="filterChart">
+            <option value="">All-Time</option>
+            <option value="last7Days">Weekly</option>
+            <option value="thisMonth">Monthly</option>
+            <option value="thisYear">Yearly</option>
+          </select>
+        </div>
+        <div class="charts-section">
+          <section class="main-transactions-chart">
+            <h2>Main Transactions</h2>
+            <canvas class="chart" id="transactionsChart"></canvas>
+          </section>
+          <section class="all-categories-chart">
+            <h2>All Categories</h2>
+            <canvas class="chart" id="allCategoriesChart"></canvas>
+          </section>
+        </div>
+      </section>
+    </main>
+    <div id="footer-container"></div>
+
+    <div class="modal" id="appModal" aria-hidden="true">
+      <div class="modal__backdrop" data-modal-close></div>
+
+      <div
+        class="modal__panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modalTitle"
+        aria-describedby="modalTitle"
+      >
+        <header class="modal__header">
+          <h2 id="modalTitle" class="nowrap">Add Transaction</h2>
+          <button
+            class="modal__close"
+            data-modal-close
+            aria-label="Close Modal"
+          >
+            &times;
+          </button>
+        </header>
+
+        <div class="modal__content" id="modalBody"></div>
+      </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="scripts/includes.js"></script>
+    <script src="scripts/ui/transactionForm.js" type="module"></script>
+    <script src="scripts/pages/transactions.page.js" type="module"></script>
+    <script src="scripts/main.js" type="module"></script>
+  </body>
+</html>

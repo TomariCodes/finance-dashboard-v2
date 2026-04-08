@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Savings</title>
+    <link rel="stylesheet" href="styles/global.css" />
+    <link rel="stylesheet" href="styles/layout.css" />
+    <link rel="stylesheet" href="styles/pages/savings.css" />
+  </head>
+  <body>
+    <div id="header-container"></div>
+    <div id="sidebar-container"></div>
+    <div class="completed-goal-message" id="completedGoalMessage">
+      <span class="celebration-icon">🎉</span><p id="completedGoalText"><span class="boldText">Congratulations!</span> You have completed a goal!</p>
+      <!-- I need an image -->
+  </div>
+    <main class="main">
+      <div class="section-divider">
+        <section class="savings-overview-section">
+          <h2>Total Savings</h2>
+          <p class="nowrap">
+            <span id="totalEarned" class="total-earned">$0.00</span> /
+            <span id="totalDesired" class="total-desired">$0.00</span>
+          </p>
+        </section>
+        <section class="savings-chart-section">
+          <h2>Transactions /w Savings</h2>
+          <canvas id="savingsChart"></canvas>
+        </section>
+      </div>
+
+      <section class="goals-section">
+        <h2>Savings Goals</h2>
+        <div>
+          <button id="addGoalBtn" class="btn primary">Add Goal</button>
+        </div>
+        <table class="goals-table">
+          <thead>
+            <tr id="goalsTableHeadRow">
+              <th>Goal Name</th>
+            </tr>
+          </thead>
+          <tbody id="goals-table-body">
+            <!-- Goals will be dynamically inserted here -->
+          </tbody>
+        </table>
+      </section>
+    </main>
+
+    <div id="footer-container"></div>
+
+    <div class="modal" id="appModal" aria-hidden="true">
+      <div class="modal__backdrop" data-modal-close></div>
+
+      <div
+        class="modal__panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="goalModalTitle"
+        aria-describedby="goalModalTitle"
+      >
+        <header class="modal__header">
+          <h2 id="goalModalTitle">Add Goal</h2>
+          <button
+            class="modal__close"
+            data-modal-close
+            aria-label="Close Modal"
+          >
+            &times;
+          </button>
+        </header>
+
+        <div class="modal__content" id="goalModalBody"></div>
+        <div class="modal__content" id="transactionModalBody"></div>
+      </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="scripts/includes.js"></script>
+    <script src="scripts/ui/transactionForm.js" type="module"></script>
+    <script src="scripts/ui/goalForm.js" type="module"></script>
+    <script src="scripts/main.js" type="module"></script>
+    <script src="scripts/pages/savings.page.js" type="module"></script>
+  </body>
+</html>

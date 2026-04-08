@@ -1,0 +1,200 @@
+.main {
+  display: flex;
+  flex-flow: row nowrap;
+  padding: 20px;
+  gap: 20px;
+}
+
+.dashboard-overview {
+  display: flex;
+  flex-flow: column wrap;
+  gap: 20px;
+  margin-bottom: 20px;
+  //border: 1px solid #ddd;
+  padding: 20px;
+  width: 40%;
+}
+
+.transactions-chart-section {
+  border: 1px solid var(--border-muted);
+  border-radius: 8px;
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-flow: column nowrap;
+  width: 100%;
+  align-items: center;
+}
+
+.dashboard-chart {
+  max-height: 300px;
+  width: 100%;
+  height: auto;
+}
+
+.goals-section {
+  border: 1px solid var(--border-muted);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-flow: column nowrap;
+  width: 100%;
+}
+
+.goals-section h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.goals-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.goals-table th,
+.goals-table td {
+  background-color: var(--info);
+  padding: 8px;
+  text-align: center;
+}
+
+.goals-table td {
+  background-color: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.dashboard-seperator {
+  padding: 20px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-flow: column nowrap;
+  width: 60%;
+  gap: 15px;
+}
+
+.recent-transactions-section {
+  border: 1px solid var(--border-muted);
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  flex-flow: column nowrap;
+  width: 100%;
+  height: 80%;
+}
+
+.recent-transactions-section h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.transactions-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.transactions-table th {
+  background-color: var(--primary);
+}
+
+.transactions-table th,
+.transactions-table td {
+  padding: 8px;
+  text-align: center;
+}
+
+.transactions-table td {
+  background-color: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.total-section {
+  border: 1px solid var(--border-muted);
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  flex-flow: column nowrap;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  height: 15%;
+}
+
+.total-section h2 {
+  font-size: 1.5rem;
+  color: var(--text-muted);
+}
+
+.total-section p {
+  font-size: 1.7rem;
+  font-weight: bold;
+}
+
+/* MEDIA QUERIES */
+
+@media (min-width: 320px) and (max-width: 1000px) {
+  body {
+    width: 100vw;
+    object-fit: contain;
+    font-size: 14px;
+    padding: 0;
+    margin: 0;
+  }
+
+  #header-container,
+  .footer-container {
+    width: 100%;
+    object-fit: cover;
+  }
+  .main {
+    flex-flow: column nowrap;
+    padding: 10px;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .dashboard-overview {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 25px;
+    order: 2;
+  }
+
+  .transactions-chart-section {
+    padding: 10px;
+    
+  }
+
+  .transactions-table td,
+  th {
+    font-size: 14px;
+    padding: 5px;
+  }
+
+  .goals-section {
+    padding: 10px;
+  }
+
+  .dashboard-chart {
+    max-height: 200px;
+  }
+  
+  .dashboard-seperator {
+    width: 100%;
+    padding: 10px;
+    margin: 0;
+  }
+
+  .recent-transactions-section {
+    padding: 20px;
+    object-fit: contain;
+  }
+
+  .total-section {
+    font-size: 1.2rem;
+    padding: 10px;
+    object-fit: contain;
+    margin-bottom: 25px;
+  }
+}
