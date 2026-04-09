@@ -4,7 +4,9 @@ import {
   getAllRecurringTransactions,
   getAllTransactionCategories,
   getAllGoalsCategories,
+  getAllInvestmentCategories,
 } from "../core/settingsStore.js";
+import { getAllTransactionsWithRecurring } from "../core/transactionsStore.js";
 import { getAllCompletedGoals } from "../core/savingsGoalsStore.js";
 import { getAllCompanies } from "../core/investmentsStore.js";
 
@@ -83,7 +85,7 @@ function handleRecurringTransactionsClick() {
   } else {
     recurringTransactions.forEach((transaction) => {
       const listItem = document.createElement("li");
-      listItem.textContent = `${transaction.name} - ${transaction.amount} - ${transaction.frequency}`;
+      listItem.textContent = `${transaction.date} - ${transaction.amount} - ${transaction.occurrenceCount}`;
       recurringTransactionsList.appendChild(listItem);
     });
   }
@@ -99,7 +101,7 @@ function handleRecurringTransactionsClick() {
 }
 
 function handleAllTransactionHistoryClick() {
-  const transactions = getAllRecurringTransactions();
+  const transactions = getAllTransactionsWithRecurring();
   const allTransactionHistoryList = document.getElementById("transactionsList");
   const transactionsSettingsSection = document.getElementById(
     "transactionsSettings",
@@ -113,7 +115,7 @@ function handleAllTransactionHistoryClick() {
   } else {
     transactions.forEach((transaction) => {
       const listItem = document.createElement("li");
-      listItem.textContent = `${transaction.name} - ${transaction.amount} - ${transaction.frequency}`;
+      listItem.textContent = `${transaction.description} - ${transaction.amount} - ${transaction.type}`;
       allTransactionHistoryList.appendChild(listItem);
     });
   }
@@ -142,9 +144,9 @@ function handleAllTransactionCategoriesClick() {
     noTransactionsItem.textContent = "No transactions found.";
     allTransactionCategoriesList.appendChild(noTransactionsItem);
   } else {
-    transactionCategories.forEach((transaction) => {
+    transactionCategories.forEach((category) => {
       const listItem = document.createElement("li");
-      listItem.textContent = `${transaction.name} - ${transaction.amount} - ${transaction.frequency}`;
+      listItem.textContent = `${category}`;
       allTransactionCategoriesList.appendChild(listItem);
     });
   }

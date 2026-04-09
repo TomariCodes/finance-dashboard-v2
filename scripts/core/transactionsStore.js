@@ -28,32 +28,34 @@ import { createModal } from "../ui/modal.js";
 import { setRecurrence } from "./dates.js";
 
 // Track when we last processed recurring transactions to prevent duplicates
+// Now tracked per transaction rather than globally
 let lastRecurringProcessDate =
   localStorage.getItem("lastRecurringProcessDate") || null;
 
 export function getAllTransactions() {
   let transactions = JSON.parse(localStorage.getItem("transactions")) || [];
 
-  return transactions;
+  // Filter out template transactions from normal transaction list
+  return transactions.filter((t) => !t.isTemplate);
+}
+
+// Function to get recurring transaction templates
+export function getRecurringTransactionTemplates() {
+  let transactions = JSON.parse(localStorage.getItem("transactions")) || [];
+  return transactions.filter((t) => t.isTemplate === true);
 }
 
 // Separate function to process recurring transactions
 export function processRecurringTransactions(force = false) {
   const today = new Date().toISOString().split("T")[0];
 
-  // Only process once per day unless forced
-  if (!force && lastRecurringProcessDate === today) {
-    console.log("Recurring transactions already processed today");
-    return false;
-  }
-
   let currentTransactions =
     JSON.parse(localStorage.getItem("transactions")) || [];
   let newTransactionsAdded = false;
 
-  // Get all recurring transactions
+  // Get all recurring template transactions (the originals, not instances)
   const recurringTransactions = currentTransactions.filter(
-    (t) => t.isRecurring && t.recurrenceInterval,
+    (t) => t.isRecurring && t.recurrenceInterval && t.isTemplate !== false,
   );
 
   for (const recurringTransaction of recurringTransactions) {
@@ -62,20 +64,34 @@ export function processRecurringTransactions(force = false) {
       continue;
     }
 
-    // Check if the next due date has passed
+    // Check if we already processed this specific recurring transaction today
+    if (!force && recurringTransaction.lastRecurringProcessDate === today) {
+      console.log(
+        `Recurring transaction "${recurringTransaction.description}" already processed today`,
+      );
+      continue;
+    }
+
+    // Process all due instances for this recurring transaction
+    let processedToday = false;
     while (recurringTransaction.nextDue <= today) {
       // Check if a transaction already exists for this date and recurring transaction
       const existsForDate = currentTransactions.some(
         (t) =>
           t.isRecurring &&
+          t.isTemplate === false &&
           t.date === recurringTransaction.nextDue &&
-          t.description === recurringTransaction.description &&
-          t.amount === recurringTransaction.amount &&
-          t.category === recurringTransaction.category,
+          t.templateId === recurringTransaction.id,
       );
 
       if (!existsForDate) {
-        // Create the new recurring transaction
+        // Increment occurrence counter
+        if (!recurringTransaction.occurrenceCount) {
+          recurringTransaction.occurrenceCount = 0;
+        }
+        recurringTransaction.occurrenceCount++;
+
+        // Create the new recurring transaction instance
         const newTransaction = {
           id: Date.now() + Math.random(),
           type: recurringTransaction.type,
@@ -84,14 +100,9 @@ export function processRecurringTransactions(force = false) {
           amount: recurringTransaction.amount,
           category: recurringTransaction.category,
           isRecurring: true,
-          recurrenceInterval: recurringTransaction.recurrenceInterval,
-          lastProcessed: recurringTransaction.nextDue,
-          nextDue: setRecurrence(
-            new Date(recurringTransaction.nextDue),
-            recurringTransaction.recurrenceInterval,
-          )
-            .toISOString()
-            .split("T")[0],
+          isTemplate: false,
+          templateId: recurringTransaction.id,
+          occurrenceNumber: recurringTransaction.occurrenceCount,
           ...(recurringTransaction.toTotal !== undefined && {
             toTotal: recurringTransaction.toTotal,
           }),
@@ -102,8 +113,9 @@ export function processRecurringTransactions(force = false) {
 
         currentTransactions.push(newTransaction);
         newTransactionsAdded = true;
+        processedToday = true;
         console.log(
-          `Added recurring transaction: ${newTransaction.description} for ${newTransaction.date}`,
+          `Added recurring transaction instance #${recurringTransaction.occurrenceCount}: ${newTransaction.description} for ${newTransaction.date}`,
         );
       } else {
         console.log(
@@ -120,6 +132,11 @@ export function processRecurringTransactions(force = false) {
         .toISOString()
         .split("T")[0];
     }
+
+    // Mark this recurring transaction as processed today
+    if (processedToday) {
+      recurringTransaction.lastRecurringProcessDate = today;
+    }
   }
 
   // Save if new transactions were added
@@ -128,7 +145,7 @@ export function processRecurringTransactions(force = false) {
     console.log("Processed recurring transactions - new transactions added");
   }
 
-  // Update the last processed date
+  // Update the global last processed date (kept for legacy compatibility)
   lastRecurringProcessDate = today;
   localStorage.setItem("lastRecurringProcessDate", today);
 
@@ -143,34 +160,55 @@ export function getAllTransactionsWithRecurring() {
 
 // Helper function to manually trigger recurring transaction processing
 export function processRecurringTransactionsManually() {
+  console.log("=== Manual Recurring Transaction Processing ===");
   const wasProcessed = processRecurringTransactions(true); // Force processing
-  transactions = JSON.parse(localStorage.getItem("transactions")) || [];
+  transactions = getAllTransactions(); // This excludes templates
+
+  // Also call the debug function to show current state
+  debugRecurringTransactions();
+
   console.log(
     `Manual recurring transaction processing completed. New transactions added: ${wasProcessed}`,
   );
+  return wasProcessed;
 }
 
 // Debug function to test recurring transactions
 export function debugRecurringTransactions() {
-  const recurringTransactions = transactions.filter(
-    (t) => t.isRecurring && t.recurrenceInterval,
+  const templates = getRecurringTransactionTemplates();
+  const instances = getAllTransactions().filter(
+    (t) => t.isRecurring && !t.isTemplate,
   );
-  console.log("Current recurring transactions:", recurringTransactions);
+
+  console.log("=== Recurring Transaction Templates ===");
+  templates.forEach((template) => {
+    console.log(`Template "${template.description}":`);
+    console.log(`  - ID: ${template.id}`);
+    console.log(`  - Start date: ${template.date}`);
+    console.log(`  - Recurrence: ${template.recurrenceInterval}`);
+    console.log(`  - Last processed: ${template.lastProcessed}`);
+    console.log(`  - Next due: ${template.nextDue}`);
+    console.log(`  - Occurrences created: ${template.occurrenceCount || 0}`);
+    console.log(
+      `  - Last processed date: ${template.lastRecurringProcessDate || "never"}`,
+    );
+
+    const templateInstances = instances.filter(
+      (i) => i.templateId === template.id,
+    );
+    console.log(`  - Instances found: ${templateInstances.length}`);
+    templateInstances.forEach((instance) => {
+      console.log(`    * #${instance.occurrenceNumber}: ${instance.date}`);
+    });
+  });
 
   const today = new Date().toISOString().split("T")[0];
-  console.log("Today's date:", today);
-
-  recurringTransactions.forEach((transaction) => {
-    console.log(`Transaction "${transaction.description}":
-    - Last processed: ${transaction.lastProcessed}
-    - Next due: ${transaction.nextDue}
-    - Due today? ${transaction.nextDue <= today ? "YES" : "NO"}`);
-  });
+  console.log(`\nToday's date: ${today}`);
 }
 
 // Initialize transactions and process recurring ones on first load
 processRecurringTransactions();
-let transactions = JSON.parse(localStorage.getItem("transactions")) || [];
+let transactions = getAllTransactions(); // This excludes templates
 
 export function handleEditTransaction(id) {
   const transaction = transactions.find((t) => t.id === id);
@@ -391,16 +429,19 @@ export function renderTransactions(transactionsToRender = transactions) {
 
   validTransactions.forEach((transaction) => {
     const row = document.createElement("tr");
-    const typeDisplay = transaction.isRecurring
+    let typeDisplay = transaction.isRecurring
       ? `${transaction.type} 🔄`
       : transaction.type;
 
+    // Add occurrence number for recurring instances
+    if (transaction.isRecurring && transaction.occurrenceNumber) {
+      typeDisplay += ` #${transaction.occurrenceNumber}`;
+    }
+
     let descriptionDisplay = transaction.description;
-    if (transaction.isRecurring && transaction.nextDue) {
-      const today = new Date().toISOString().split("T")[0];
-      if (transaction.nextDue > today) {
-        descriptionDisplay += ` (Next: ${transaction.nextDue})`;
-      }
+    if (transaction.isRecurring && transaction.templateId) {
+      // This is a recurring instance
+      descriptionDisplay += ` (Recurring #${transaction.occurrenceNumber})`;
     }
 
     row.innerHTML = `
@@ -453,10 +494,20 @@ export function addTransaction(data) {
       newTransaction.investmentDirection = data.investmentDirection;
     if (data.isRecurring) {
       newTransaction.isRecurring = data.isRecurring;
+      if (data.isTemplate !== undefined)
+        newTransaction.isTemplate = data.isTemplate;
+      if (data.templateId) newTransaction.templateId = data.templateId;
+      if (data.occurrenceNumber)
+        newTransaction.occurrenceNumber = data.occurrenceNumber;
+      if (data.occurrenceCount !== undefined)
+        newTransaction.occurrenceCount = data.occurrenceCount;
       if (data.recurrenceInterval)
         newTransaction.recurrenceInterval = data.recurrenceInterval;
       if (data.lastProcessed) newTransaction.lastProcessed = data.lastProcessed;
       if (data.nextDue) newTransaction.nextDue = data.nextDue;
+      if (data.lastRecurringProcessDate)
+        newTransaction.lastRecurringProcessDate = data.lastRecurringProcessDate;
+      if (data.createdDate) newTransaction.createdDate = data.createdDate;
     }
   }
 
@@ -468,54 +519,170 @@ export function addTransaction(data) {
 }
 
 export function addRecurringTransaction(data, recurrenceInterval) {
-  // Create only the original transaction with recurring metadata
-  addTransaction({
+  const today = new Date().toISOString().split("T")[0];
+  const startDate = data.date;
+
+  console.log(`Creating recurring transaction: ${data.description}`);
+  console.log(
+    `Start date: ${startDate}, Today: ${today}, Recurrence: ${recurrenceInterval}`,
+  );
+
+  // Create the template recurring transaction
+  const templateTransaction = {
     ...data,
     isRecurring: true,
+    isTemplate: true,
     recurrenceInterval: recurrenceInterval,
-    lastProcessed: data.date, // Track when we last processed this recurring transaction
-    nextDue: setRecurrence(new Date(data.date), recurrenceInterval)
-      .toISOString()
-      .split("T")[0], // When the next occurrence is due
-  });
+    lastProcessed: startDate,
+    nextDue: startDate,
+    occurrenceCount: 0,
+    createdDate: today,
+  };
+
+  addTransaction(templateTransaction);
+
+  // Immediately backfill all instances from start date to today
+  backfillRecurringTransaction(
+    templateTransaction.id,
+    startDate,
+    today,
+    recurrenceInterval,
+  );
+
+  // Refresh the transactions array
+  transactions = getAllTransactions();
+}
+
+// Helper function to create all recurring instances from start date to end date
+function backfillRecurringTransaction(
+  templateId,
+  startDate,
+  endDate,
+  recurrenceInterval,
+) {
+  console.log(
+    `Backfilling recurring transaction from ${startDate} to ${endDate}`,
+  );
+
+  let allTransactions = JSON.parse(localStorage.getItem("transactions")) || [];
+  const template = allTransactions.find((t) => t.id === templateId);
+
+  if (!template) {
+    console.error("Template transaction not found for backfilling");
+    return;
+  }
+
+  let currentDate = new Date(startDate);
+  const endDateObj = new Date(endDate);
+  let occurrenceCount = 0;
+
+  while (currentDate <= endDateObj) {
+    const dateString = currentDate.toISOString().split("T")[0];
+
+    // Check if instance already exists
+    const exists = allTransactions.some(
+      (t) =>
+        t.templateId === templateId &&
+        t.date === dateString &&
+        t.isTemplate === false,
+    );
+
+    if (!exists) {
+      occurrenceCount++;
+
+      const instance = {
+        id: Date.now() + Math.random(),
+        type: template.type,
+        date: dateString,
+        description: template.description,
+        amount: template.amount,
+        category: template.category,
+        isRecurring: true,
+        isTemplate: false,
+        templateId: templateId,
+        occurrenceNumber: occurrenceCount,
+        ...(template.toTotal !== undefined && { toTotal: template.toTotal }),
+        ...(template.investmentDirection && {
+          investmentDirection: template.investmentDirection,
+        }),
+      };
+
+      allTransactions.push(instance);
+      console.log(
+        `Created instance #${occurrenceCount}: ${instance.description} for ${dateString}`,
+      );
+    }
+
+    // Move to next recurrence
+    currentDate = setRecurrence(currentDate, recurrenceInterval);
+  }
+
+  // Update the template with the occurrence count and next due date
+  template.occurrenceCount = occurrenceCount;
+  template.lastProcessed = endDate;
+  template.nextDue = setRecurrence(new Date(endDate), recurrenceInterval)
+    .toISOString()
+    .split("T")[0];
+
+  // Save all changes
+  localStorage.setItem("transactions", JSON.stringify(allTransactions));
+  console.log(
+    `Backfilled ${occurrenceCount} instances for recurring transaction`,
+  );
 }
 
 export function deleteTransaction(id) {
-  const newTransactions = transactions.filter(
+  // Get all transactions including templates
+  let allTransactions = JSON.parse(localStorage.getItem("transactions")) || [];
+  const newTransactions = allTransactions.filter(
     (transaction) => transaction.id !== id,
   );
-  transactions = newTransactions;
-  localStorage.setItem("transactions", JSON.stringify(transactions));
+
+  localStorage.setItem("transactions", JSON.stringify(newTransactions));
 
   // Refresh the transactions array from localStorage to ensure consistency
-  transactions = JSON.parse(localStorage.getItem("transactions")) || [];
+  transactions = getAllTransactions(); // This will exclude templates
 }
 
 export function updateTransaction(id, data) {
-  const transactionIndex = transactions.findIndex((t) => t.id === parseInt(id));
+  // Get all transactions including templates
+  let allTransactions = JSON.parse(localStorage.getItem("transactions")) || [];
+  const transactionIndex = allTransactions.findIndex(
+    (t) => t.id === parseInt(id),
+  );
+
   if (transactionIndex !== -1) {
-    transactions[transactionIndex] = {
-      ...transactions[transactionIndex],
+    allTransactions[transactionIndex] = {
+      ...allTransactions[transactionIndex],
       date: data.date,
       type: data.type,
       description: data.description,
       amount: parseFloat(data.amount),
       category: data.category,
       ...(data.isRecurring !== undefined && { isRecurring: data.isRecurring }),
+      ...(data.isTemplate !== undefined && { isTemplate: data.isTemplate }),
+      ...(data.templateId && { templateId: data.templateId }),
+      ...(data.occurrenceNumber && { occurrenceNumber: data.occurrenceNumber }),
+      ...(data.occurrenceCount !== undefined && {
+        occurrenceCount: data.occurrenceCount,
+      }),
       ...(data.recurrenceInterval && {
         recurrenceInterval: data.recurrenceInterval,
       }),
       ...(data.lastProcessed && { lastProcessed: data.lastProcessed }),
       ...(data.nextDue && { nextDue: data.nextDue }),
+      ...(data.lastRecurringProcessDate && {
+        lastRecurringProcessDate: data.lastRecurringProcessDate,
+      }),
       ...(data.toTotal !== undefined && { toTotal: data.toTotal }),
       ...(data.investmentDirection && {
         investmentDirection: data.investmentDirection,
       }),
     };
-    localStorage.setItem("transactions", JSON.stringify(transactions));
+    localStorage.setItem("transactions", JSON.stringify(allTransactions));
 
     // Refresh the transactions array from localStorage to ensure consistency
-    transactions = JSON.parse(localStorage.getItem("transactions")) || [];
+    transactions = getAllTransactions(); // This will exclude templates
     return true;
   }
   return false;
@@ -523,7 +690,11 @@ export function updateTransaction(id, data) {
 
 export function editTransaction(id, transactionData) {
   console.log("Edit transaction with ID:", id);
-  let matchingTransaction = transactions.find((t) => t.id === id);
+
+  // Check both regular transactions and templates
+  let allTransactions = JSON.parse(localStorage.getItem("transactions")) || [];
+  let matchingTransaction = allTransactions.find((t) => t.id === id);
+
   if (matchingTransaction) {
     console.log("Found transaction to edit:", matchingTransaction);
 
@@ -646,11 +817,7 @@ export function getTransactionsByTypeDesc() {
   );
 }
 
-
 export function getSettingsRecurringTransactions() {
-  let allTransactions = getAllTransactionsWithRecurring();
-
-  return allTransactions.filter(
-    (transaction) => transaction.isRecurring && transaction.recurrenceInterval,
-  );
+  // Return only the template transactions for settings display
+  return getRecurringTransactionTemplates();
 }

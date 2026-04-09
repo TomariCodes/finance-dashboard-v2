@@ -60,8 +60,6 @@ section h2 {
 
 .transactions-settings-section li:last-child, .savings-settings-section li:last-child, .investments-settings-section li:last-child, .factory-settings-section li:last-child  {
     border-bottom: none;
-    color: var(--danger);
-    font-weight: bold;
 }
 
 .investments-settings-section, .factory-settings-section {
@@ -120,6 +118,8 @@ section h2 {
 #deleteAllTransactions, #deleteAllGoals, #deleteAllCompanies, #saveDB, #deleteAllData {
   tabindex: 1;
   cursor: pointer;
+      color: var(--danger);
+    font-weight: bold;
 }
 
 .back-button {

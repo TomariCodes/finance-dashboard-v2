@@ -212,6 +212,7 @@ function initializeTransactionForm(presetData = {}) {
       if (type === "Savings") {
         const savingsDirection =
           document.querySelector("#savingsDirection").value;
+          
         transactionData.toTotal = savingsDirection === "to" ? true : false;
 
         if (savingsDirection === "to") {
