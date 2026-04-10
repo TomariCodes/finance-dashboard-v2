@@ -1,14 +1,21 @@
 import { getAllTransactionsWithRecurring } from "./transactionsStore.js";
 import { createChartUI, updateChartUI } from "../ui/chart.ui.js";
 import { getTotalByType } from "../calculators/transactions.calc.js";
+import { saveDB, loadDB } from "./storage.js";
+const database = loadDB();
+const data = database.db;
 let transactions = getAllTransactionsWithRecurring();
-
-const companies = [];
+console.log(database);
+console.log(data);
 
 export function getAllCompanies() {
+  const companies = data.companies || [];
+  console.log("Loaded companies: ", companies);
   return companies;
 }
 
+const companies = getAllCompanies();
+console.log("Companies after initialization: ", companies);
 export function getCompanyByName(name) {
   return companies.find((c) => c.name === name);
 }
@@ -24,7 +31,11 @@ export function updateCompany(originalName, updatedData) {
   // Re-render the companies table
   const companiesTable = document.querySelector(".investment-companies-table");
   if (companiesTable) {
-    renderCompaniesList(companiesTable, companies, getAllTransactions());
+    renderCompaniesList(
+      companiesTable,
+      companies,
+      getAllTransactionsWithRecurring(),
+    );
   }
 
   return companies[companyIndex];
@@ -38,11 +49,16 @@ export function addCompany(companyData) {
   };
 
   companies.push(newCompany);
+  saveDB();
 
   // Re-render the companies table
   const companiesTable = document.querySelector(".investment-companies-table");
   if (companiesTable) {
-    renderCompaniesList(companiesTable, companies, getAllTransactions());
+    renderCompaniesList(
+      companiesTable,
+      companies,
+      getAllTransactionsWithRecurring(),
+    );
   }
 
   return newCompany;
@@ -79,7 +95,7 @@ export function renderInvestmentTransactionsTable(
   });
 
   console.log("Rendering investment transactions: ", investmentTransactions);
-if (investmentTransactions.length === 0) {
+  if (investmentTransactions.length === 0) {
     const emptyRow = document.createElement("tr");
     emptyRow.innerHTML = `
       <td colspan="4" style="text-align: center; color: #888;">No data to display</td>
@@ -87,7 +103,7 @@ if (investmentTransactions.length === 0) {
     tbody.appendChild(emptyRow);
     return;
   }
-  
+
   investmentTransactions.slice(0, limit).forEach((tx) => {
     console.log("Rendering transaction: ", tx);
     const row = document.createElement("tr");
@@ -137,15 +153,6 @@ export function renderResponsiveCompaniesList(table, companies, transactions) {
   const headRow = document.getElementById("investmentsTableHeadRow");
   if (headRow) {
     headRow.innerHTML = "<th>Company</th>"; // Reset to base header
-  }
-
-  if (companies.length === 0) {
-    const emptyRow = document.createElement("tr");
-    emptyRow.innerHTML = `
-      <td colspan="4" style="text-align: center; color: #888;">No data to display</td>
-    `;
-    tbody.appendChild(emptyRow);
-    return;
   }
 
   if (userWidth <= 320) {
@@ -242,9 +249,9 @@ export function renderResponsiveCompaniesList(table, companies, transactions) {
     companies.forEach(async (company) => {
       const row = document.createElement("tr");
       row.innerHTML = `
-        <td>${company.name}</td>
-        <td>$${renderCompanyAmount(company.name, transactions)}</td>
-        <td>${company.ticker}</td>
+      <td>${company.name}</td>
+      <td>$${renderCompanyAmount(company.name, transactions)}</td>
+      <td>${company.ticker}</td>
         <td>${(await returnDividend(company.ticker)) === null ? "0.00 USD" : await returnDividend(company.ticker)}</td>
         <td>
           <button class="editMoney-btn" data-edit-name="${company.name}">Add/Move Money</button>
@@ -259,6 +266,14 @@ export function renderResponsiveCompaniesList(table, companies, transactions) {
         handleChangeInvestmentFunds(company.name),
       );
 
+      if (companies.length === 0) {
+        const emptyRow = document.createElement("tr");
+        emptyRow.innerHTML = `
+        <td colspan="4" style="text-align: center; color: #888;">No data to display</td>
+      `;
+        tbody.appendChild(emptyRow);
+        return;
+      }
       deleteBtn.addEventListener("click", () =>
         handleDeleteCompany(company.name),
       );
@@ -329,17 +344,47 @@ export function renderInvestmentsChart() {
 const backendBASEURL = "https://prosperon-proxy.tomari7878.workers.dev/";
 
 export async function returnTicker(companyName) {
+  const lowerCompanyName = companyName.toLowerCase();
+
+  // Handle hardcoded cases first
+  if (lowerCompanyName === "blackrock") {
+    return "BLK";
+  } else if (lowerCompanyName === "apple") {
+    return "AAPL";
+  }
+
   try {
     const res = await fetch(
       `${backendBASEURL}utilities/search?query=${encodeURIComponent(companyName)}`,
     );
-    const results = await res.json();
-    const first =
-      Array.isArray(results) && results.length > 0 ? results[0] : null;
-    if (companyName == "BlackRock") {
-      return "BLK";
+
+    if (!res.ok) {
+      console.error(`API request failed with status: ${res.status}`);
+      return null;
     }
-    return first ? first.ticker : null;
+
+    const results = await res.json();
+    console.log(`API response for "${companyName}":`, results);
+
+    if (!Array.isArray(results) || results.length === 0) {
+      console.warn(`No results found for company: ${companyName}`);
+      return null;
+    }
+
+    const first = results[0];
+    console.log(`First result for "${companyName}":`, first);
+
+    // Verify the structure and extract ticker
+    if (first && first.ticker) {
+      console.log(`Ticker found for "${companyName}": ${first.ticker}`);
+      return first.ticker;
+    } else {
+      console.error(
+        `No ticker property found in result for "${companyName}". Available properties:`,
+        Object.keys(first || {}),
+      );
+      return null;
+    }
   } catch (error) {
     console.error("Error fetching ticker:", error);
     return null;
@@ -356,8 +401,11 @@ export async function returnDividend(ticker) {
     const { latest } = await res.json();
     console.log(latest);
 
-    let dividend = `${(latest.trailingDivY * 100).toFixed(2)} USD`;
+    let dividend = `$${(latest.trailingDivY * 100).toFixed(2)} USD`;
     console.log(dividend);
+    if (dividend === null || dividend === "NaN USD") {
+      dividend = `$0.00 USD`;
+    }
     return dividend; // Return the latest dividend or null if not available
   } catch (error) {
     console.error("Error fetching dividend:", error);
@@ -423,7 +471,12 @@ export function handleDeleteCompany(companyName) {
       const companiesTable = document.querySelector(
         ".investment-companies-table",
       );
-      renderCompaniesList(companiesTable, companies, getAllTransactions());
+      renderCompaniesList(
+        companiesTable,
+        companies,
+        getAllTransactionsWithRecurring(),
+      );
     }
+    saveDB();
   }
 }

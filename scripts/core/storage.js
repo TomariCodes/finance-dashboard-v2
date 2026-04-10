@@ -7,7 +7,13 @@ export function loadDB() {
     if (dbString) {
         try {
             const db = JSON.parse(dbString);
-            return db, {"message": "Database loaded successfully.", "status": "success", "function": "loadDB"};
+            console.log("Loaded DB: ", db);
+            return {
+                db: db,
+                message: "Database loaded successfully.",
+                status: "success",
+                function: "loadDB"
+            };
         } catch (error) {
             console.error("Error parsing DB from localStorage:", error);
             return null;

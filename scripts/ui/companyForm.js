@@ -3,6 +3,7 @@ import {
   getAllCompanies,
   addCompany,
   updateCompany,
+  returnTicker,
 } from "../core/investmentsStore.js";
 
 function initializeAddCompanyForm(presetData = {}) {
@@ -24,7 +25,7 @@ function initializeAddCompanyForm(presetData = {}) {
   }
 
   // Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -74,25 +75,39 @@ function initializeAddCompanyForm(presetData = {}) {
 
     try {
       if (presetData.isEdit) {
-        // Update existing company
+        // Update existing company - fetch new ticker
+        console.log(`Fetching ticker for updated company: ${companyName}`);
+        const ticker =
+          (await returnTicker(companyName)) ||
+          companyName
+            .toUpperCase()
+            .replace(/[^A-Z]/g, "")
+            .substring(0, 4);
+
         updateCompany(presetData.originalName, {
           name: companyName,
-          ticker: companyName
+          ticker: ticker,
+        });
+        alert(
+          `Company "${companyName}" updated successfully with ticker: ${ticker}`,
+        );
+      } else {
+        // Add new company - fetch ticker from API
+        console.log(`Fetching ticker for new company: ${companyName}`);
+        const ticker =
+          (await returnTicker(companyName)) ||
+          companyName
             .toUpperCase()
             .replace(/[^A-Z]/g, "")
-            .substring(0, 4), // Simple ticker generation
-        });
-        alert(`Company "${companyName}" updated successfully!`);
-      } else {
-        // Add new company
+            .substring(0, 4);
+
         addCompany({
           name: companyName,
-          ticker: companyName
-            .toUpperCase()
-            .replace(/[^A-Z]/g, "")
-            .substring(0, 4), // Simple ticker generation
+          ticker: ticker,
         });
-        alert(`Company "${companyName}" added successfully!`);
+        alert(
+          `Company "${companyName}" added successfully with ticker: ${ticker}`,
+        );
       }
 
       // Clear form
