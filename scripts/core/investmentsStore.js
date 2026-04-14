@@ -1,9 +1,19 @@
-import { getAllTransactionsWithRecurring } from "./transactionsStore.js";
+import { getAllTransactionsWithRecurring, processRecurringTransactions } from "./transactionsStore.js";
 import { createChartUI, updateChartUI } from "../ui/chart.ui.js";
 import { getTotalByType } from "../calculators/transactions.calc.js";
 import { saveDB, loadDB } from "./storage.js";
 const database = loadDB();
 const data = database.db;
+
+// Process recurring transactions if needed, then get all transactions
+const lastProcessDate = localStorage.getItem("lastRecurringProcessDate");
+const today = new Date().toISOString().split("T")[0];
+
+if (lastProcessDate !== today) {
+  console.log("Processing recurring transactions for investments page");
+  processRecurringTransactions();
+}
+
 let transactions = getAllTransactionsWithRecurring();
 console.log(database);
 console.log(data);

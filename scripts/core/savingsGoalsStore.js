@@ -1,24 +1,18 @@
 import { getAllTransactionsWithRecurring } from "./transactionsStore.js";
 import { getTotalByType } from "../calculators/transactions.calc.js";
 import { createChartUI } from "../ui/chart.ui.js";
+import { saveDB, loadDB } from "./storage.js";
 
 let defaultGoals = [];
 
 let goals = null;
 
 export function getAllGoals() {
+  const database = loadDB();
+  const data = database.db;
   // Always load fresh from localStorage to avoid cache issues
-  const savedGoals = localStorage.getItem("savingsGoals");
-  console.log("Raw localStorage data:", savedGoals);
-
-  goals = savedGoals ? JSON.parse(savedGoals) : defaultGoals;
-  console.log("Parsed goals from localStorage:", goals);
-
-  // If we loaded default goals, save them to localStorage
-  if (!savedGoals) {
-    console.log("No saved goals found, saving default goals");
-    localStorage.setItem("savingsGoals", JSON.stringify(goals));
-  }
+  const goals = data.goals ? data.goals : [];
+  console.log(goals);
   return goals;
 }
 
@@ -238,7 +232,8 @@ export function addGoal(goalData) {
     currentAmount: goalData.startingAmount || 0,
   };
   currentGoals.push(newGoal);
-  localStorage.setItem("savingsGoals", JSON.stringify(currentGoals));
+  goals = currentGoals;
+  saveDB();
   goals = null; // Clear cache to force refresh
 
   // Re-render immediately
@@ -295,10 +290,11 @@ export function updateGoal(idOrName, updatedData) {
     console.log("Goal after update:", currentGoals[goalIndex]);
     console.log("All goals after update:", currentGoals);
 
-    localStorage.setItem("savingsGoals", JSON.stringify(currentGoals));
-    console.log("Saved to localStorage:", localStorage.getItem("savingsGoals"));
+    
+  goals = currentGoals;
+  saveDB();
 
-    goals = null; // Clear cache to force refresh
+  goals = null; // Clear cache to force refresh
 
     // Re-render immediately
     renderGoalsTable();
@@ -426,7 +422,8 @@ export function deleteGoal(idOrName) {
   }
 
   currentGoals.splice(goalIndex, 1);
-  localStorage.setItem("savingsGoals", JSON.stringify(currentGoals));
+  goals = currentGoals;
+  saveDB();
   goals = null; // Clear cache to force refresh
 
   // Re-render immediately

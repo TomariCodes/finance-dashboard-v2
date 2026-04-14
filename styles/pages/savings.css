@@ -3,7 +3,8 @@
   justify-content: space-between;
   //align-items: center;
   padding: 20px;
-  height: calc(87vh - 2rem);
+  min-height: calc(87vh - 2rem);
+  height: auto;
   gap: 20px;
 }
 
@@ -52,6 +53,8 @@
 .savings-chart-section {
   width: 100%;
   height: 70%;
+  min-height: 450px; /* Ensure enough space for chart */
+  max-height: 500px; /* Increased to accommodate chart */
   background-color: var(--bg);
   padding: 1rem;
   border-radius: 8px;
@@ -59,15 +62,16 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  gap: 1rem; /* Add gap to make spacing more obvious */
   object-fit: contain;
 }
 
 .savings-chart-section canvas {
-  width: 100%;
-  height: 100%;
+  width: 90%; /* Use percentage to stay within container */
+  height: 280px; /* Reduced height to fit with title and padding */
   max-width: 350px;
-  max-height: 350px;
+  max-height: 280px;
 }
 
 .savings-chart-section h2 {
@@ -255,11 +259,31 @@
 
 /* MEDIA QUERIES */
 
-@media (min-width: 1000px) {
+@media (min-width: 1220px) and (max-width: 1440px) {
+  .main {
+    min-height: calc(85vh - 2rem); /* Reduced height for better spacing */
+    padding-bottom: 40px; /* Extra bottom padding */
+  }
 
   .savings-chart-section canvas {
-    max-width: 350px;
-    max-height: 350px;
+    width: 85%;
+    height: auto;
+    max-width: 280px;
+    max-height: 280px;
+  }
+
+  .savings-chart-section {
+    padding: 1rem;
+  }
+}
+
+@media screen and (max-width: 1440px) {
+
+  .savings-chart-section canvas {
+    width: 85%;
+    height: auto;
+    max-width: 300px;
+    max-height: 300px;
   }
 
   .savings-chart-section {
@@ -270,6 +294,8 @@
     font-size: 2rem;
   }
 
+
+
 }
 
 @media (min-width: 320px) and (max-width: 1000px) {
@@ -279,17 +305,14 @@
     object-fit: cover;
   }
 
-  #footer-container {
-    margin-top: 2rem;
-  }
-
   .main {
     flex-direction: column;
     align-items: center;
     height: auto;
     width: 100vw;
     padding: 0.5rem;
-     gap: 1rem;
+    padding-bottom: 70px; /* Extra bottom padding for mobile */
+    gap: 2rem;
   }
 
   .section-divider {
@@ -299,12 +322,20 @@
   }
 
   .savings-overview-section,
-  .savings-chart-section,
   .goals-section {
     width: 100%;
     height: auto;
     object-fit: contain;
     padding: 1rem;
+  }
+
+  .savings-chart-section {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    padding: 2rem 1rem; /* Specific padding for chart section */
+    display: flex;
+    justify-content: center;
   }
 
   .savings-overview-section  {
@@ -316,11 +347,11 @@
     font-size: 1.2rem;
   }
 
-
-
   .savings-chart-section canvas {
-    max-width: 100%;
+    width: 60%;
     height: auto;
+    max-width: 60%;
+    max-height: 250px;
   }
 
   .goals-table th, .goals-table td {
@@ -333,4 +364,29 @@
     font-size: 0.8rem;
   }
  
+}
+
+
+@media screen and (max-width: 768px) {
+  .savings-chart-section canvas {
+    max-width: 90%;
+    height: auto;
+  }
+
+  .savings-overview-section,
+  .savings-chart-section,
+  .goals-section {
+    width: 100%;
+    height: auto;
+    padding: 1rem;
+  }
+
+  .savings-overview-section  {
+    margin-bottom: 1.5rem;
+  }
+
+  .savings-overview-section h2 {
+    font-size: 1.2rem;
+  }
+
 }

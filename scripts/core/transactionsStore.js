@@ -26,14 +26,16 @@ Duplicates are prevented by checking for existing transactions on the same date.
 
 import { createModal } from "../ui/modal.js";
 import { setRecurrence } from "./dates.js";
+import { saveDB, loadDB } from "./storage.js";
+const database = loadDB();
+const data = database.db;
 
 // Track when we last processed recurring transactions to prevent duplicates
 // Now tracked per transaction rather than globally
-let lastRecurringProcessDate =
-  localStorage.getItem("lastRecurringProcessDate") || null;
+let lastRecurringProcessDate = localStorage.getItem("lastRecurringProcessDate") || null;
 
 export function getAllTransactions() {
-  let transactions = JSON.parse(localStorage.getItem("transactions")) || [];
+  let transactions = data.transactions || [];
 
   // Filter out template transactions from normal transaction list
   return transactions.filter((t) => !t.isTemplate);
@@ -41,16 +43,16 @@ export function getAllTransactions() {
 
 // Function to get recurring transaction templates
 export function getRecurringTransactionTemplates() {
-  let transactions = JSON.parse(localStorage.getItem("transactions")) || [];
+  let transactions = data.transactions || [];
   return transactions.filter((t) => t.isTemplate === true);
 }
 
 // Separate function to process recurring transactions
 export function processRecurringTransactions(force = false) {
   const today = new Date().toISOString().split("T")[0];
+  console.log(`Processing recurring transactions for date: ${today}`);
 
-  let currentTransactions =
-    JSON.parse(localStorage.getItem("transactions")) || [];
+  let currentTransactions = data.transactions || [];
   let newTransactionsAdded = false;
 
   // Get all recurring template transactions (the originals, not instances)
@@ -58,23 +60,24 @@ export function processRecurringTransactions(force = false) {
     (t) => t.isRecurring && t.recurrenceInterval && t.isTemplate !== false,
   );
 
+
+
   for (const recurringTransaction of recurringTransactions) {
-    // Skip if this recurring transaction doesn't have the necessary metadata
     if (!recurringTransaction.nextDue || !recurringTransaction.lastProcessed) {
       continue;
     }
 
     // Check if we already processed this specific recurring transaction today
     if (!force && recurringTransaction.lastRecurringProcessDate === today) {
-      console.log(
-        `Recurring transaction "${recurringTransaction.description}" already processed today`,
-      );
       continue;
     }
 
+
     // Process all due instances for this recurring transaction
+    // Change from <= to < to only process transactions whose due date has passed
     let processedToday = false;
-    while (recurringTransaction.nextDue <= today) {
+    while (recurringTransaction.nextDue < today) {
+
       // Check if a transaction already exists for this date and recurring transaction
       const existsForDate = currentTransactions.some(
         (t) =>
@@ -114,14 +117,7 @@ export function processRecurringTransactions(force = false) {
         currentTransactions.push(newTransaction);
         newTransactionsAdded = true;
         processedToday = true;
-        console.log(
-          `Added recurring transaction instance #${recurringTransaction.occurrenceCount}: ${newTransaction.description} for ${newTransaction.date}`,
-        );
-      } else {
-        console.log(
-          `Skipping duplicate recurring transaction: ${recurringTransaction.description} for ${recurringTransaction.nextDue}`,
-        );
-      }
+      } 
 
       // Update the original recurring transaction's next due date and last processed
       recurringTransaction.lastProcessed = recurringTransaction.nextDue;
@@ -131,6 +127,66 @@ export function processRecurringTransactions(force = false) {
       )
         .toISOString()
         .split("T")[0];
+
+    
+    }
+
+    // If today is exactly the due date, create the transaction for today
+    if (recurringTransaction.nextDue === today) {
+ 
+
+      // Check if a transaction already exists for this date and recurring transaction
+      const existsForDate = currentTransactions.some(
+        (t) =>
+          t.isRecurring &&
+          t.isTemplate === false &&
+          t.date === recurringTransaction.nextDue &&
+          t.templateId === recurringTransaction.id,
+      );
+
+      if (!existsForDate) {
+        // Increment occurrence counter
+        if (!recurringTransaction.occurrenceCount) {
+          recurringTransaction.occurrenceCount = 0;
+        }
+        recurringTransaction.occurrenceCount++;
+
+        // Create the new recurring transaction instance
+        const newTransaction = {
+          id: Date.now() + Math.random(),
+          type: recurringTransaction.type,
+          date: recurringTransaction.nextDue,
+          description: recurringTransaction.description,
+          amount: recurringTransaction.amount,
+          category: recurringTransaction.category,
+          isRecurring: true,
+          isTemplate: false,
+          templateId: recurringTransaction.id,
+          occurrenceNumber: recurringTransaction.occurrenceCount,
+          ...(recurringTransaction.toTotal !== undefined && {
+            toTotal: recurringTransaction.toTotal,
+          }),
+          ...(recurringTransaction.investmentDirection && {
+            investmentDirection: recurringTransaction.investmentDirection,
+          }),
+        };
+
+        currentTransactions.push(newTransaction);
+        newTransactionsAdded = true;
+        processedToday = true;
+
+
+        // Update the original recurring transaction's next due date and last processed
+        recurringTransaction.lastProcessed = recurringTransaction.nextDue;
+        recurringTransaction.nextDue = setRecurrence(
+          new Date(recurringTransaction.nextDue),
+          recurringTransaction.recurrenceInterval,
+        )
+          .toISOString()
+          .split("T")[0];
+
+       
+      } 
     }
 
     // Mark this recurring transaction as processed today
@@ -142,7 +198,6 @@ export function processRecurringTransactions(force = false) {
   // Save if new transactions were added
   if (newTransactionsAdded) {
     localStorage.setItem("transactions", JSON.stringify(currentTransactions));
-    console.log("Processed recurring transactions - new transactions added");
   }
 
   // Update the global last processed date (kept for legacy compatibility)
@@ -154,22 +209,20 @@ export function processRecurringTransactions(force = false) {
 
 // Function to get all transactions including processing recurring ones
 export function getAllTransactionsWithRecurring() {
-  processRecurringTransactions();
+  // Don't process recurring transactions every time this is called
+  // Only process them once per day automatically or when forced
   return JSON.parse(localStorage.getItem("transactions")) || [];
 }
 
 // Helper function to manually trigger recurring transaction processing
 export function processRecurringTransactionsManually() {
-  console.log("=== Manual Recurring Transaction Processing ===");
+
   const wasProcessed = processRecurringTransactions(true); // Force processing
   transactions = getAllTransactions(); // This excludes templates
 
   // Also call the debug function to show current state
   debugRecurringTransactions();
 
-  console.log(
-    `Manual recurring transaction processing completed. New transactions added: ${wasProcessed}`,
-  );
   return wasProcessed;
 }
 
@@ -180,18 +233,9 @@ export function debugRecurringTransactions() {
     (t) => t.isRecurring && !t.isTemplate,
   );
 
-  console.log("=== Recurring Transaction Templates ===");
+ 
   templates.forEach((template) => {
-    console.log(`Template "${template.description}":`);
-    console.log(`  - ID: ${template.id}`);
-    console.log(`  - Start date: ${template.date}`);
-    console.log(`  - Recurrence: ${template.recurrenceInterval}`);
-    console.log(`  - Last processed: ${template.lastProcessed}`);
-    console.log(`  - Next due: ${template.nextDue}`);
-    console.log(`  - Occurrences created: ${template.occurrenceCount || 0}`);
-    console.log(
-      `  - Last processed date: ${template.lastRecurringProcessDate || "never"}`,
-    );
+
 
     const templateInstances = instances.filter(
       (i) => i.templateId === template.id,
@@ -203,11 +247,21 @@ export function debugRecurringTransactions() {
   });
 
   const today = new Date().toISOString().split("T")[0];
-  console.log(`\nToday's date: ${today}`);
+
 }
 
 // Initialize transactions and process recurring ones on first load
-processRecurringTransactions();
+// Only process if it hasn't been done today
+const lastProcessDate = localStorage.getItem("lastRecurringProcessDate");
+const today = new Date().toISOString().split("T")[0];
+
+if (lastProcessDate !== today) {
+  console.log("Processing recurring transactions on app initialization");
+  processRecurringTransactions();
+} else {
+  console.log("Recurring transactions already processed today, skipping");
+}
+
 let transactions = getAllTransactions(); // This excludes templates
 
 export function handleEditTransaction(id) {

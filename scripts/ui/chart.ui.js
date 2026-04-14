@@ -26,6 +26,8 @@ export function createChartUI(canvasEl, labels, values, position = 'top') {
             }]
         },
         options: {
+            responsive: true,
+            maintainAspectRatio: false, // This is crucial for containment
             plugins: {
                 legend: {
                     position: position

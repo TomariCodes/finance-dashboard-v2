@@ -139,3 +139,32 @@ section h2 {
   background-color: var(--info);
   color: var(--text);
 }
+
+/* RESPONSIVENESS */
+
+@media screen and (max-width: 1440px) {
+    .main {
+        flex-direction: column;
+        height: auto;
+    }
+
+    .transactions-settings-section, .savings-settings-section, .settings-seperator {
+        width: 100%;
+    }
+
+    .settings-seperator {
+        flex-direction: row;
+        gap: 10px;
+    }
+
+    #footer-container {
+      margin-top: 50px;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .settings-seperator {
+        flex-direction: column;
+        gap: 20px;
+    }
+}
