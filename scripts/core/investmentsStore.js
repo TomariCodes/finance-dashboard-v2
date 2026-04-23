@@ -1,30 +1,35 @@
-import { getAllTransactionsWithRecurring, processRecurringTransactions } from "./transactionsStore.js";
+import { getAllTransactionsWithRecurring } from "./transactionsStore.js";
 import { createChartUI, updateChartUI } from "../ui/chart.ui.js";
 import { getTotalByType } from "../calculators/transactions.calc.js";
 import { saveDB, loadDB } from "./storage.js";
-const database = loadDB();
-const data = database.db;
-
-// Process recurring transactions if needed, then get all transactions
-const lastProcessDate = localStorage.getItem("lastRecurringProcessDate");
-const today = new Date().toISOString().split("T")[0];
-
-if (lastProcessDate !== today) {
-  console.log("Processing recurring transactions for investments page");
-  processRecurringTransactions();
-}
+import { confirmAction } from "../ui/confirm.js";
 
 let transactions = getAllTransactionsWithRecurring();
-console.log(database);
-console.log(data);
+
+let companies = [];
 
 export function getAllCompanies() {
-  const companies = data.companies || [];
+  if (Array.isArray(companies) && companies.length > 0) {
+    return companies;
+  }
+
+  const database = loadDB();
+  const loadedCompanies = Array.isArray(database?.db?.companies)
+    ? database.db.companies
+    : [];
+
+  if (
+    !Array.isArray(companies) ||
+    (companies.length === 0 && loadedCompanies.length > 0)
+  ) {
+    companies = [...loadedCompanies];
+  }
+
   console.log("Loaded companies: ", companies);
   return companies;
 }
 
-const companies = getAllCompanies();
+companies = getAllCompanies();
 console.log("Companies after initialization: ", companies);
 export function getCompanyByName(name) {
   return companies.find((c) => c.name === name);
@@ -59,6 +64,7 @@ export function addCompany(companyData) {
   };
 
   companies.push(newCompany);
+  loadDB().db.companies = companies;
   saveDB();
 
   // Re-render the companies table
@@ -163,6 +169,13 @@ export function renderResponsiveCompaniesList(table, companies, transactions) {
   const headRow = document.getElementById("investmentsTableHeadRow");
   if (headRow) {
     headRow.innerHTML = "<th>Company</th>"; // Reset to base header
+  }
+
+  if (!Array.isArray(companies) || companies.length === 0) {
+    const emptyRow = document.createElement("tr");
+    emptyRow.innerHTML = `<td colspan="5" style="text-align: center; color: #888;">No data to display</td>`;
+    tbody.appendChild(emptyRow);
+    return;
   }
 
   if (userWidth <= 320) {
@@ -276,14 +289,6 @@ export function renderResponsiveCompaniesList(table, companies, transactions) {
         handleChangeInvestmentFunds(company.name),
       );
 
-      if (companies.length === 0) {
-        const emptyRow = document.createElement("tr");
-        emptyRow.innerHTML = `
-        <td colspan="4" style="text-align: center; color: #888;">No data to display</td>
-      `;
-        tbody.appendChild(emptyRow);
-        return;
-      }
       deleteBtn.addEventListener("click", () =>
         handleDeleteCompany(company.name),
       );
@@ -299,6 +304,16 @@ export function renderCompaniesList(table, companies, transactions) {
   }
   const tbody = table.querySelector("tbody");
   tbody.innerHTML = "";
+
+  if (!Array.isArray(companies) || companies.length === 0) {
+    const emptyRow = document.createElement("tr");
+    emptyRow.innerHTML = `
+      <td colspan="5" style="text-align: center; color: #888;">No data to display</td>
+    `;
+    tbody.appendChild(emptyRow);
+    return;
+  }
+
   companies.forEach(async (company) => {
     const row = document.createElement("tr");
     row.innerHTML = `
@@ -330,10 +345,11 @@ export function renderCompaniesList(table, companies, transactions) {
 
 export function renderInvestmentsChart() {
   const canvas = document.getElementById("investmentsChart");
+  const currentTransactions = getAllTransactionsWithRecurring();
 
-  if (transactions.length === 0) {
+  if (currentTransactions.length === 0) {
     console.log("No transactions found - rendering empty chart");
-    createChartUI(canvas, ["No Data"], [1], "left");
+    createChartUI(canvas, ["No data"], [1], "left");
     return;
   }
 
@@ -341,11 +357,11 @@ export function renderInvestmentsChart() {
     canvas,
     ["Income", "Expense", "Bill", "Savings", "Investment"],
     [
-      getTotalByType(transactions, "Income"),
-      getTotalByType(transactions, "Expense"),
-      getTotalByType(transactions, "Bill"),
-      getTotalByType(transactions, "Savings"),
-      getTotalByType(transactions, "Investment"),
+      getTotalByType(currentTransactions, "Income"),
+      getTotalByType(currentTransactions, "Expense"),
+      getTotalByType(currentTransactions, "Bill"),
+      getTotalByType(currentTransactions, "Savings"),
+      getTotalByType(currentTransactions, "Investment"),
     ],
     "left",
   );
@@ -460,33 +476,20 @@ export function handleChangeInvestmentFunds(companyName) {
   }
 }
 
-export function handleDeleteCompany(companyName) {
-  console.log(`Delete company: ${companyName}`);
-
-  const company = companies.find((c) => c.name === companyName);
-  if (!company) {
-    console.error("Company not found:", companyName);
-    return;
-  }
-
-  if (
-    confirm(
-      `Are you sure you want to delete the company "${companyName}"? This cannot be undone.`,
-    )
-  ) {
-    const index = companies.findIndex((c) => c.name === companyName);
-    if (index !== -1) {
-      companies.splice(index, 1);
-      // Re-render the companies list after deletion
-      const companiesTable = document.querySelector(
-        ".investment-companies-table",
-      );
-      renderCompaniesList(
-        companiesTable,
-        companies,
-        getAllTransactionsWithRecurring(),
-      );
-    }
+export async function handleDeleteCompany(companyName) {
+  if (!(await confirmAction())) return;
+  const index = companies.findIndex((c) => c.name === companyName);
+  if (index !== -1) {
+    companies.splice(index, 1);
+    loadDB().db.companies = companies;
     saveDB();
+    const companiesTable = document.querySelector(
+      ".investment-companies-table",
+    );
+    renderCompaniesList(
+      companiesTable,
+      companies,
+      getAllTransactionsWithRecurring(),
+    );
   }
 }

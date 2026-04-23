@@ -2,18 +2,39 @@ import { getAllTransactionsWithRecurring } from "./transactionsStore.js";
 import { getTotalByType } from "../calculators/transactions.calc.js";
 import { createChartUI } from "../ui/chart.ui.js";
 import { saveDB, loadDB } from "./storage.js";
-
-let defaultGoals = [];
+import { confirmAction } from "../ui/confirm.js";
 
 let goals = null;
 
 export function getAllGoals() {
+  if (Array.isArray(goals) && goals.length > 0) {
+    return goals;
+  }
+
   const database = loadDB();
-  const data = database.db;
-  // Always load fresh from localStorage to avoid cache issues
-  const goals = data.goals ? data.goals : [];
+  const data = database?.db || {};
+  const loadedGoals = Array.isArray(data.goals) ? data.goals : [];
+
+  if (!Array.isArray(goals) || (goals.length === 0 && loadedGoals.length > 0)) {
+    goals = [...loadedGoals];
+  }
+
   console.log(goals);
   return goals;
+}
+
+export function resetAllGoalProgress() {
+  const updatedGoals = getAllGoals().map((goal) => ({
+    ...goal,
+    currentAmount: 0,
+    isCompleted: false,
+  }));
+  const db = loadDB().db;
+  db.goals = updatedGoals;
+  db.completedGoals = [];
+  goals = updatedGoals;
+  saveDB();
+  goals = null;
 }
 
 export function renderSavingsChart() {
@@ -21,8 +42,8 @@ export function renderSavingsChart() {
   const transactions = getAllTransactionsWithRecurring();
   if (transactions.length === 0) {
     console.log("No transactions found - rendering empty chart");
-      createChartUI(canvas, ["No Data"], [1]);
-      return;
+    createChartUI(canvas, ["No data"], [1]);
+    return;
   }
   createChartUI(
     canvas,
@@ -62,11 +83,11 @@ export function renderResponsiveGoalsTable() {
 
   if (currentGoals.length === 0) {
     let row = document.createElement("tr");
-    row.innerHTML = `<td colspan="5" style="text-align: center; padding: 20px;">No savings goals found. Start by adding a new goal!</td>`;
+    row.innerHTML = `<td colspan="5" style="text-align: center; padding: 20px;">No data to display</td>`;
     container.appendChild(row);
     return;
   }
-  
+
   if (userWidth >= 320 && userWidth < 768) {
     const headRow = document.getElementById("goalsTableHeadRow");
     const totalTh = document.createElement("th");
@@ -188,24 +209,6 @@ export function renderResponsiveGoalsTable() {
     });
   }
 }
-export function renderSavingsGoals() {
-  let container = document.getElementById("savingsGoalsContainer");
-  container.innerHTML = "";
-  const currentGoals = getAllGoals();
-  currentGoals.forEach((goal) => {
-    let goalElement = document.createElement("div");
-    goalElement.classList.add("goal");
-    goalElement.innerHTML = `
-      <h3>${goal.name}</h3>
-      <p>Target: $${goal.targetAmount}</p>
-      <p>Current: $${goal.currentAmount}</p>
-      <progress value="${goal.currentAmount}" max="${goal.targetAmount}"></progress>
-    `;
-
-    container.appendChild(goalElement);
-  });
-}
-
 export function renderSavingsCategories(select, goalsList) {
   if (!select) {
     console.error("Savings category select element not found");
@@ -233,8 +236,9 @@ export function addGoal(goalData) {
   };
   currentGoals.push(newGoal);
   goals = currentGoals;
+  loadDB().db.goals = goals;
   saveDB();
-  goals = null; // Clear cache to force refresh
+  goals = null;
 
   // Re-render immediately
   renderGoalsTable();
@@ -290,11 +294,10 @@ export function updateGoal(idOrName, updatedData) {
     console.log("Goal after update:", currentGoals[goalIndex]);
     console.log("All goals after update:", currentGoals);
 
-    
-  goals = currentGoals;
-  saveDB();
-
-  goals = null; // Clear cache to force refresh
+    goals = currentGoals;
+    loadDB().db.goals = goals;
+    saveDB();
+    goals = null;
 
     // Re-render immediately
     renderGoalsTable();
@@ -314,27 +317,24 @@ export function updateGoal(idOrName, updatedData) {
 }
 
 export function renderGoalsTable() {
-  let container = document.getElementById("goals-table-body");
+  const container = document.getElementById("goals-table-body");
+  if (!container) return;
 
-  // Check if container exists (might not exist on all pages)
-  if (!container) {
-    console.log("Goals table container not found - skipping table render");
-    return;
-  }
-
-  // Clear existing content
   container.innerHTML = "";
-
-  // Get fresh goals data
-  const currentGoals = getAllGoals();
-  console.log("renderGoalsTable - Rendering with goals:", currentGoals);
-
-  // Clear and rebuild table headers to prevent duplicates
   const headRow = document.getElementById("goalsTableHeadRow");
   if (headRow) {
     headRow.innerHTML =
       "<th>Goal Name</th><th>Target Amount</th><th>Current Amount</th><th>Progress</th><th>Actions</th>";
   }
+
+  const currentGoals = getAllGoals();
+  if (currentGoals.length === 0) {
+    const row = document.createElement("tr");
+    row.innerHTML = `<td colspan="5" style="text-align: center; padding: 20px;">No data to display</td>`;
+    container.appendChild(row);
+    return;
+  }
+
   currentGoals.forEach((goal) => {
     let row = document.createElement("tr");
     row.innerHTML = `
@@ -406,25 +406,20 @@ export function handleChangeFunds(goalName) {
 
 export function deleteGoal(idOrName) {
   const currentGoals = getAllGoals();
-
-  // Try to find by ID first (if idOrName is a number), then by name
   let goalIndex = -1;
   if (typeof idOrName === "number" || !isNaN(idOrName)) {
     goalIndex = currentGoals.findIndex((g) => g.id == idOrName);
   }
-
   if (goalIndex === -1) {
     goalIndex = currentGoals.findIndex((g) => g.name === idOrName);
   }
-
-  if (goalIndex === -1) {
-    throw new Error("Goal not found");
-  }
+  if (goalIndex === -1) throw new Error("Goal not found");
 
   currentGoals.splice(goalIndex, 1);
   goals = currentGoals;
+  loadDB().db.goals = goals;
   saveDB();
-  goals = null; // Clear cache to force refresh
+  goals = null;
 
   // Re-render immediately
   renderGoalsTable();
@@ -490,20 +485,10 @@ export function handleEditTransaction(goalName) {
   editGoal(goalName);
 }
 
-function handleDeleteTransaction(goalName) {
-  console.log(`Delete goal: ${goalName}`);
-
+async function handleDeleteTransaction(goalName) {
   const goal = getAllGoals().find((g) => g.name === goalName);
-  if (!goal) {
-    console.error("Goal not found:", goalName);
-    return;
-  }
-
-  if (
-    confirm(
-      `Are you sure you want to delete the goal "${goalName}"? This cannot be undone.`,
-    )
-  ) {
+  if (!goal) return;
+  if (await confirmAction()) {
     deleteGoal(goal.id);
   }
 }
@@ -528,19 +513,16 @@ function renderCompletedGoalMessage(goal) {
 
 // Local function to save completed goals
 function saveCompletedGoal(goal) {
-  const completedGoals =
-    JSON.parse(localStorage.getItem("settingsCompletedGoals")) || [];
-  completedGoals.push({
+  const db = loadDB().db;
+  if (!Array.isArray(db.completedGoals)) db.completedGoals = [];
+  db.completedGoals.push({
     id: goal.id,
     name: goal.name,
     targetAmount: goal.targetAmount,
     currentAmount: goal.currentAmount,
     completedDate: new Date().toISOString(),
   });
-  localStorage.setItem(
-    "settingsCompletedGoals",
-    JSON.stringify(completedGoals),
-  );
+  saveDB();
 }
 
 export function changeGoalStatus(goal) {
@@ -563,6 +545,5 @@ export function changeGoalStatus(goal) {
 }
 
 export function getAllCompletedGoals() {
-  const goals = getAllGoals();
-  return goals.filter((goal) => goal.isCompleted);
+  return loadDB().db.completedGoals || [];
 }

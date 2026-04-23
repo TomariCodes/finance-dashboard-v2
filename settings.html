@@ -22,8 +22,12 @@
           <li id="recurringTransactions" tabindex="0">
             Recurring Transactions
           </li>
-          <li tabindex="0" id="allTransactionHistory">All Transaction History</li>
-          <li tabindex="0" id="allTransactionCategories">Transaction Categories</li>
+          <li tabindex="0" id="allTransactionHistory">
+            All Transaction History
+          </li>
+          <li tabindex="0" id="allTransactionCategories">
+            Transaction Categories
+          </li>
           <li tabindex="0" id="deleteAllTransactions">
             Delete All Transactions
           </li>
@@ -33,7 +37,9 @@
         <h2>Savings Settings</h2>
         <ul id="goalsList">
           <li tabindex="0" id="completedGoals">Completed Goals</li>
-          <li tabindex="0" id="goalTransactionHistory">Goal Transaction History</li>
+          <li tabindex="0" id="goalTransactionHistory">
+            Goal Transaction History
+          </li>
           <li tabindex="0" id="goalCategories">Goal Categories</li>
           <li tabindex="0" id="deleteAllGoals">Delete All Goals</li>
         </ul>
@@ -43,8 +49,12 @@
           <h2>Investment Settings</h2>
           <ul id="investmentsList">
             <li tabindex="0" id="investmentCompanies">Investment Companies</li>
-            <li tabindex="0" id="investmentTransactionHistory">Investment Transaction History</li>
-            <li tabindex="0" id="investmentCategories">Investment Categories</li>
+            <li tabindex="0" id="investmentTransactionHistory">
+              Investment Transaction History
+            </li>
+            <li tabindex="0" id="investmentCategories">
+              Investment Categories
+            </li>
             <li tabindex="0" id="deleteAllCompanies">Delete All Companies</li>
           </ul>
         </section>
@@ -60,7 +70,7 @@
 
     <div class="footer-container" id="footer-container"></div>
 
-        <div class="modal" id="appModal" aria-hidden="true">
+    <div class="modal" id="appModal" aria-hidden="true">
       <div class="modal__backdrop" data-modal-close></div>
 
       <div
@@ -81,12 +91,13 @@
           </button>
         </header>
 
-        <div class="modal__content" id="settingsModalBody"></div>
+        <div class="modal__content" id="confirmModalBody"></div>
       </div>
     </div>
     <script src="scripts/includes.js"></script>
     <script src="scripts/main.js" type="module"></script>
     <script src="scripts/core/storage.js" type="module"></script>
+    <script src="./scripts/ui/confirm.js" type="module"></script>
     <script src="scripts/ui/settingsModal.js" type="module"></script>
     <script src="scripts/core/settingsStore.js" type="module"></script>
     <script src="scripts/pages/settings.page.js" type="module"></script>

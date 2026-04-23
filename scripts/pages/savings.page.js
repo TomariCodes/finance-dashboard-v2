@@ -6,11 +6,9 @@ import {
   renderResponsiveGoalsTable,
 } from "../core/savingsGoalsStore.js";
 
-const goals = getAllGoals();
-
-renderSavingsSummary(goals);
+renderSavingsSummary(getAllGoals());
 // Make functions available globally for goal updates
-window.renderSavingsSummary = () => renderSavingsSummary(goals);
+window.renderSavingsSummary = () => renderSavingsSummary(getAllGoals());
 
 const renderModal = createModal({
   titleId: "goalModalTitle",

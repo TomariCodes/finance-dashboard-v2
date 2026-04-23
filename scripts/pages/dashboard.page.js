@@ -21,7 +21,7 @@ const renderDashboardChart = () => {
     console.log(
       "No transactions found for the current month - rendering empty chart",
     );
-    createChartUI(chart, ["No Data"], [1]);
+    createChartUI(chart, ["No data"], [1]);
     return;
   }
 
@@ -60,7 +60,7 @@ function renderDashboardGoals(limit) {
 
   if (recentGoals.length === 0) {
     const row = document.createElement("tr");
-    row.innerHTML = `<td colspan="3" style="text-align: center; padding: 20px;">No goals found.</td>`;
+    row.innerHTML = `<td colspan="3" style="text-align: center; padding: 20px;">No data to display</td>`;
     goalsTableBody.appendChild(row);
     return;
   }
@@ -121,7 +121,7 @@ function renderMediaTables(limit) {
 
   if (recentTransactions.length === 0) {
     const row = document.createElement("tr");
-    row.innerHTML = `<td colspan="6" style="text-align: center; padding: 20px;">No transactions found.</td>`;
+    row.innerHTML = `<td colspan="6" style="text-align: center; padding: 20px;">No data to display</td>`;
     transactionsTableBody.appendChild(row);
     return;
   }

@@ -1,4 +1,5 @@
-import { saveDB, resetDB } from "../core/storage.js";
+import { loadDB, saveDB } from "../core/storage.js";
+import { confirmAction } from "../ui/confirm.js";
 import {
   renderMessage,
   getAllRecurringTransactions,
@@ -7,8 +8,38 @@ import {
   getAllInvestmentCategories,
 } from "../core/settingsStore.js";
 import { getAllTransactionsWithRecurring } from "../core/transactionsStore.js";
-import { getAllCompletedGoals } from "../core/savingsGoalsStore.js";
+import {
+  getAllCompletedGoals,
+  resetAllGoalProgress,
+} from "../core/savingsGoalsStore.js";
 import { getAllCompanies } from "../core/investmentsStore.js";
+
+async function handleDeleteAllTransactions() {
+  if (!(await confirmAction())) return;
+  const db = loadDB().db;
+  db.transactions = [];
+  db.recurringTransactions = [];
+  saveDB();
+  resetAllGoalProgress();
+  renderMessage("success", "All transactions deleted.", "resetDB");
+}
+
+async function handleDeleteAllGoals() {
+  if (!(await confirmAction())) return;
+  const db = loadDB().db;
+  db.goals = [];
+  db.completedGoals = [];
+  saveDB();
+  renderMessage("success", "All goals deleted.", "resetDB");
+}
+
+async function handleDeleteAllCompanies() {
+  if (!(await confirmAction())) return;
+  const db = loadDB().db;
+  db.companies = [];
+  saveDB();
+  renderMessage("success", "All companies deleted.", "resetDB");
+}
 
 // Function to initialize transaction list event listeners
 function initializeTransactionListeners() {
@@ -44,11 +75,10 @@ function initializeTransactionListeners() {
     );
   }
   if (deleteAllTransactionsEl) {
-    deleteAllTransactionsEl.addEventListener("click", () => {
-      localStorage.removeItem("transactions");
-      saveDB(); // Save the empty state to localStorage
-      renderMessage("success", "All transactions deleted.", "resetDB");
-    });
+    deleteAllTransactionsEl.addEventListener(
+      "click",
+      handleDeleteAllTransactions,
+    );
   }
 }
 
@@ -181,11 +211,7 @@ function initializeGoalListeners() {
     goalCategoriesEl.addEventListener("click", handleGoalCategoriesClick);
   }
   if (deleteAllGoalsEl) {
-    deleteAllGoalsEl.addEventListener("click", () => {
-      localStorage.removeItem("goals");
-      saveDB(); // Save the empty state to localStorage
-      renderMessage("success", "All goals deleted.", "resetDB");
-    });
+    deleteAllGoalsEl.addEventListener("click", handleDeleteAllGoals);
   }
 }
 
@@ -236,7 +262,7 @@ function handleCompletedGoalsClick() {
 function handleAllGoalsTransactionHistoryClick() {
   const transactions = getAllRecurringTransactions();
   const goalTransactions = transactions.filter(
-    (transaction) => transaction.type === "savings",
+    (transaction) => transaction.type.toLowerCase() === "savings",
   );
   const allGoalsHistoryList = document.getElementById("goalsList");
   const goalsSettingsSection = document.getElementById("goalsSettings");
@@ -324,11 +350,7 @@ function initializeInvestmentsListeners() {
   }
 
   if (deleteAllCompaniesEl) {
-    deleteAllCompaniesEl.addEventListener("click", () => {
-      localStorage.removeItem("companies");
-      saveDB(); // Save the empty state to localStorage
-      renderMessage("success", "All companies deleted.", "resetDB");
-    });
+    deleteAllCompaniesEl.addEventListener("click", handleDeleteAllCompanies);
   }
 }
 
@@ -358,7 +380,7 @@ function handleInvestmentCompaniesClick() {
   } else {
     companies.forEach((company) => {
       const listItem = document.createElement("li");
-      listItem.textContent = `${company.name} - ${company.investmentAmount}`;
+      listItem.textContent = `${company.name} - ${company.ticker}`;
       investmentsList.appendChild(listItem);
     });
   }
@@ -376,7 +398,7 @@ function handleInvestmentCompaniesClick() {
 function handleInvestmentsTransactionHistoryClick() {
   const transactions = getAllRecurringTransactions();
   const investmentTransactions = transactions.filter(
-    (transaction) => transaction.type === "investment",
+    (transaction) => transaction.type.toLowerCase() === "investment",
   );
   const allInvestmentHistoryList = document.getElementById("investmentsList");
   const investmentSettingsSection =
@@ -390,7 +412,7 @@ function handleInvestmentsTransactionHistoryClick() {
   } else {
     investmentTransactions.forEach((transaction) => {
       const listItem = document.createElement("li");
-      listItem.textContent = `${transaction.name} - ${transaction.amount} - ${transaction.frequency}`;
+      listItem.textContent = `${transaction.name} - ${transaction.amount}`;
       allInvestmentHistoryList.appendChild(listItem);
     });
   }
@@ -442,30 +464,30 @@ document.getElementById("saveDB").addEventListener("click", () => {
   renderMessage(result.status, result.message, result.function);
 });
 
-document.getElementById("deleteAllData").addEventListener("click", () => {
-  const result = resetDB();
-  renderMessage(result.status, result.message, result.function);
+document.getElementById("deleteAllData").addEventListener("click", async () => {
+  if (!(await confirmAction())) return;
+  const db = loadDB().db;
+  db.transactions = [];
+  db.goals = [];
+  db.completedGoals = [];
+  db.recurringTransactions = [];
+  db.companies = [];
+  db.lastRecurringProcessDate = null;
+  saveDB();
+  renderMessage("success", "All data deleted.", "resetDB");
 });
 
 document
   .getElementById("deleteAllTransactions")
-  .addEventListener("click", () => {
-    localStorage.removeItem("transactions");
-    saveDB(); // Save the empty state to localStorage
-    renderMessage("success", "All transactions deleted.", "resetDB");
-  });
+  .addEventListener("click", handleDeleteAllTransactions);
 
-document.getElementById("deleteAllGoals").addEventListener("click", () => {
-  localStorage.removeItem("goals");
-  saveDB(); // Save the empty state to localStorage
-  renderMessage("success", "All goals deleted.", "resetDB");
-});
+document
+  .getElementById("deleteAllGoals")
+  .addEventListener("click", handleDeleteAllGoals);
 
-document.getElementById("deleteAllCompanies").addEventListener("click", () => {
-  localStorage.removeItem("companies");
-  saveDB(); // Save the empty state to localStorage
-  renderMessage("success", "All companies deleted.", "resetDB");
-});
+document
+  .getElementById("deleteAllCompanies")
+  .addEventListener("click", handleDeleteAllCompanies);
 
 // Initialize transaction list listeners when page loads
 initializeTransactionListeners();

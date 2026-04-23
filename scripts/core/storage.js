@@ -1,55 +1,44 @@
-import { getAllGoals, getAllCompletedGoals } from "./savingsGoalsStore.js";
-import { getAllTransactionsWithRecurring, getSettingsRecurringTransactions } from "./transactionsStore.js";
-import { getAllCompanies } from "./investmentsStore.js";
+function createDefaultDb() {
+  return {
+    transactions: [],
+    goals: [],
+    completedGoals: [],
+    recurringTransactions: [],
+    companies: [],
+    lastRecurringProcessDate: null,
+  };
+}
+
+let _db = null;
+
+function initDb() {
+  const stored = localStorage.getItem("prosperonDB");
+  if (stored) {
+    try {
+      _db = { ...createDefaultDb(), ...JSON.parse(stored) };
+      return;
+    } catch {
+      _db = createDefaultDb();
+      return;
+    }
+  }
+  // Legacy fallback: migrate old separate keys into the single DB
+  _db = {
+    ...createDefaultDb(),
+    transactions:
+      JSON.parse(localStorage.getItem("transactions") || "null") || [],
+    goals: JSON.parse(localStorage.getItem("goals") || "null") || [],
+    companies: JSON.parse(localStorage.getItem("companies") || "null") || [],
+  };
+}
 
 export function loadDB() {
-    const dbString = localStorage.getItem("prosperonDB");
-    if (dbString) {
-        try {
-            const db = JSON.parse(dbString);
-            console.log("Loaded DB: ", db);
-            return {
-                db: db,
-                message: "Database loaded successfully.",
-                status: "success",
-                function: "loadDB"
-            };
-        } catch (error) {
-            console.error("Error parsing DB from localStorage:", error);
-            return null;
-        }
-    } else {
-        console.warn("No DB found in localStorage, returning null.");
-        return null;
-    }
+  if (!_db) initDb();
+  return { db: _db, message: "Database loaded.", status: "success" };
 }
 
 export function saveDB() {
-    const transactions = getAllTransactionsWithRecurring();
-    const goals = getAllGoals();
-    const completedGoals = getAllCompletedGoals();
-    const recurringTransactions = getSettingsRecurringTransactions();
-    const companies = getAllCompanies();
-    console.log("Saving DB with the following data:", {
-        transactions,
-        goals,
-        completedGoals,
-        recurringTransactions,
-        companies,
-    });
-    const db = {
-        transactions,
-        goals,
-        completedGoals,
-        recurringTransactions,
-        companies,
-    };
-    localStorage.setItem("prosperonDB", JSON.stringify(db));
-
-    return {"message": "Database saved successfully.", "status": "success", "function": "saveDB"};
-}
-
-export function resetDB() {
-    localStorage.removeItem("prosperonDB");
-    return {"message": "Database reset successfully.", "status": "success", "function": "resetDB"};
+  if (!_db) initDb();
+  localStorage.setItem("prosperonDB", JSON.stringify(_db));
+  return { message: "Database saved successfully.", status: "success" };
 }

@@ -15,6 +15,7 @@ const renderModal = createModal({
   bodyId: "companyModalBody",
 });
 
+
 // Make modal functions available globally for the investment form and transactions
 window.closeModal = renderModal.closeModal;
 window.openModal = renderModal.openModal;

@@ -1,16 +1,21 @@
 .main {
   width: 100%;
-  height: auto;
+  min-height: calc(100vh - 120px);
+  max-height: none;
+  overflow-y: visible;
   padding: 1rem;
+  box-sizing: border-box;
 }
 
 .transactions-actions {
-  width: 90vw;
+  width: 100%;
+  max-width: 1200px;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   border: 1px solid var(--border);
   padding: 1rem;
+  box-sizing: border-box;
 }
 
 .searchTransactions {
@@ -83,11 +88,16 @@
   flex-direction: column;
   gap: 20px;
   align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  box-sizing: border-box;
 }
 
 .transactions-table {
-  width: 90vw;
+  width: 100%;
+  max-width: 1200px;
   border-collapse: collapse;
+  box-sizing: border-box;
 }
 
 .transactions-table thead {
@@ -150,6 +160,10 @@
   align-items: center;
   gap: 1rem;
   width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  padding: 1rem 0;
 }
 
 .filterChart-section {
@@ -186,10 +200,13 @@
 .charts-section {
   display: flex;
   width: 100%;
+  max-width: 1200px;
   justify-content: space-evenly;
-  align-items: center;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
+  align-items: flex-start;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 2rem;
 }
 
 .main-transactions-chart,
@@ -198,6 +215,7 @@
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
+  width: min(100%, 420px);
 }
 
 .main-transactions-chart h2,
@@ -206,25 +224,63 @@
 }
 
 .chart {
-  width: 400px;
-  height: 300px;
+  display: block;
+  width: 100% !important;
+  max-width: 400px;
+  height: 300px !important;
+  min-width: 250px;
 }
 
 /* MEDIA QUERIES */
 
+
 @media (min-width: 320px) and (max-width: 1000px) {
-
-
-  #header-container, #footer-container {
-    width: 100%;
-    object-fit: cover;
+  .main {
+    padding: 0.5rem;
   }
+
+  .charts-section {
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 0;
+  }
+
+  .chart {
+    max-width: 350px;
+    height: 250px !important;
+  }
+
+  .transactions-actions {
+    padding: 0.8rem;
+  }
+
+  .search {
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .charts-section {
+    padding: 0.5rem;
+  }
+
+  .chart {
+    max-width: 300px;
+    height: 200px;
+  }
+
+  .main {
+    padding: 0.25rem;
+  }
+
   .transactions-table {
     width: 90%;
     padding: 0.5rem;
   }
 
-  .transactions-table th, td {
+  .transactions-table th,
+  .transactions-table td {
     padding: 0.5rem;
   }
 
@@ -239,7 +295,9 @@
 
   .chart {
     width: 100%;
-    height: auto;
+    max-width: 320px;
+    min-width: 0;
+    height: 220px !important;
     margin-bottom: 0.5rem;
   }
 
@@ -266,7 +324,8 @@
     gap: 0.5rem;
   }
 
-  .edit-btn, .delete-btn {
+  .edit-btn,
+  .delete-btn {
     padding: 0.3rem;
     width: 100%;
     margin-bottom: 0.5rem;

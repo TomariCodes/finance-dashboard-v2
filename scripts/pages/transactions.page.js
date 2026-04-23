@@ -6,6 +6,17 @@ import {
   filterByDateRange,
 } from "../calculators/transactions.calc.js";
 
+const NO_DATA_LABEL = "No data";
+const NO_DATA_VALUES = [1];
+const MAIN_CHART_LABELS = ["Income", "Expense", "Bill"];
+const ALL_CATEGORIES_LABELS = [
+  "Income",
+  "Expense",
+  "Bill",
+  "Savings",
+  "Investment",
+];
+
 let transactions = storage.getAllTransactions();
 const renderModal = createModal();
 let transactionsRendered = false; // Flag to prevent double rendering
@@ -69,26 +80,35 @@ window.refreshTransactions = () => {
 // Function to update charts with current transaction data
 function updateCharts(filteredTransactions = transactions) {
   const updateData = filteredTransactions;
+  const hasData = Array.isArray(updateData) && updateData.length > 0;
 
   if (transactionsChart) {
-    const transactionsData = [
-      getTotalByType(updateData, "Income"),
-      getTotalByType(updateData, "Expense"),
-      getTotalByType(updateData, "Bill"),
-    ];
-    transactionsChart.data.datasets[0].data = transactionsData;
+    transactionsChart.data.labels = hasData
+      ? MAIN_CHART_LABELS
+      : [NO_DATA_LABEL];
+    transactionsChart.data.datasets[0].data = hasData
+      ? [
+          getTotalByType(updateData, "Income"),
+          getTotalByType(updateData, "Expense"),
+          getTotalByType(updateData, "Bill"),
+        ]
+      : NO_DATA_VALUES;
     transactionsChart.update();
   }
 
   if (allCategoriesChart) {
-    const allCategoriesData = [
-      getTotalByType(updateData, "Income"),
-      getTotalByType(updateData, "Expense"),
-      getTotalByType(updateData, "Bill"),
-      getTotalByType(updateData, "Savings"),
-      getTotalByType(updateData, "Investment"),
-    ];
-    allCategoriesChart.data.datasets[0].data = allCategoriesData;
+    allCategoriesChart.data.labels = hasData
+      ? ALL_CATEGORIES_LABELS
+      : [NO_DATA_LABEL];
+    allCategoriesChart.data.datasets[0].data = hasData
+      ? [
+          getTotalByType(updateData, "Income"),
+          getTotalByType(updateData, "Expense"),
+          getTotalByType(updateData, "Bill"),
+          getTotalByType(updateData, "Savings"),
+          getTotalByType(updateData, "Investment"),
+        ]
+      : NO_DATA_VALUES;
     allCategoriesChart.update();
   }
 }
@@ -185,8 +205,9 @@ document.getElementById("filterChart").addEventListener("change", (e) => {
 
 transactionsChart =
   transactions.length > 0
-    ? createChartUI(document.getElementById("transactionsChart"), 
-        ["Income", "Expense", "Bill"],
+    ? createChartUI(
+        document.getElementById("transactionsChart"),
+        MAIN_CHART_LABELS,
         [
           getTotalByType(transactions, "Income"),
           getTotalByType(transactions, "Expense"),
@@ -195,15 +216,15 @@ transactionsChart =
       )
     : createChartUI(
         document.getElementById("transactionsChart"),
-        ["No Data"],
-        [1],
+        [NO_DATA_LABEL],
+        NO_DATA_VALUES,
       );
 
 allCategoriesChart =
   transactions.length > 0
     ? createChartUI(
         document.getElementById("allCategoriesChart"),
-        ["Income", "Expense", "Bill", "Savings", "Investment"],
+        ALL_CATEGORIES_LABELS,
         [
           getTotalByType(transactions, "Income"),
           getTotalByType(transactions, "Expense"),
@@ -214,6 +235,6 @@ allCategoriesChart =
       )
     : createChartUI(
         document.getElementById("allCategoriesChart"),
-        ["No Data"],
-        [1],
+        [NO_DATA_LABEL],
+        NO_DATA_VALUES,
       );

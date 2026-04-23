@@ -1,20 +1,7 @@
 import { getAllGoals } from "./savingsGoalsStore.js";
 import { getAllTransactionsWithRecurring } from "./transactionsStore.js";
-import { loadDB, saveDB, resetDB } from "./storage.js";
+import { loadDB, saveDB } from "./storage.js";
 
-// Load from localStorage with defaults
-function loadRecurringTransactions() {
-  return (
-    JSON.parse(localStorage.getItem("settingsRecurringTransactions")) || []
-  );
-}
-
-function loadCompletedGoals() {
-  return JSON.parse(localStorage.getItem("settingsCompletedGoals")) || [];
-}
-
-export let recurringTransactions = loadRecurringTransactions();
-export let completedGoals = loadCompletedGoals();
 let goals = getAllGoals();
 
 // Get all recurring transactions from the main transaction store
@@ -34,10 +21,8 @@ export function getAllTransactionCategories() {
 }
 
 export function getAllGoalsCategories() {
-  const allTransactions = getAllTransactionsWithRecurring();
-  console.log("All transactions for category extraction:", allTransactions);
-  let savingsTransactions = allTransactions.filter((t) => t.type === "savings");
-  const categoriesSet = new Set(savingsTransactions.map((t) => t.category));
+  const goals = getAllGoals();
+  const categoriesSet = new Set(goals.map((g) => g.name));
   console.log("Unique categories:", categoriesSet);
   return Array.from(categoriesSet);
 }
@@ -45,36 +30,34 @@ export function getAllGoalsCategories() {
 export function getAllInvestmentCategories() {
   const allTransactions = getAllTransactionsWithRecurring();
   console.log("All transactions for category extraction:", allTransactions);
-  let investmentTransactions = allTransactions.filter((t) => t.type === "investment");
+  let investmentTransactions = allTransactions.filter(
+    (t) => t.type === "investment",
+  );
   const categoriesSet = new Set(investmentTransactions.map((t) => t.category));
   console.log("Unique categories:", categoriesSet);
   return Array.from(categoriesSet);
 }
 
-// Get all recurring transactions from settings store
 export function getSettingsRecurringTransactions() {
-  return [...recurringTransactions];
+  return loadDB().db.recurringTransactions || [];
 }
 
-// Get all completed goals
 export function getAllCompletedGoals() {
-  return [...completedGoals];
+  return loadDB().db.completedGoals || [];
 }
 
 export function addRecurringTransaction(transaction) {
-  recurringTransactions.push(transaction);
-  localStorage.setItem(
-    "settingsRecurringTransactions",
-    JSON.stringify(recurringTransactions),
-  );
+  const db = loadDB().db;
+  if (!Array.isArray(db.recurringTransactions)) db.recurringTransactions = [];
+  db.recurringTransactions.push(transaction);
+  saveDB();
 }
 
 export function completeGoal(goal) {
-  completedGoals.push(goal);
-  localStorage.setItem(
-    "settingsCompletedGoals",
-    JSON.stringify(completedGoals),
-  );
+  const db = loadDB().db;
+  if (!Array.isArray(db.completedGoals)) db.completedGoals = [];
+  db.completedGoals.push(goal);
+  saveDB();
 }
 
 export const renderMessage = (status, message, functionName) => {
