@@ -7,12 +7,69 @@ import {
   getAllGoalsCategories,
   getAllInvestmentCategories,
 } from "../core/settingsStore.js";
-import { getAllTransactionsWithRecurring } from "../core/transactionsStore.js";
+import {
+  getAllTransactions,
+  getAllTransactionsWithRecurring,
+  deleteRecurringTemplate,
+} from "../core/transactionsStore.js";
 import {
   getAllCompletedGoals,
+  deleteCompletedGoal,
   resetAllGoalProgress,
 } from "../core/savingsGoalsStore.js";
 import { getAllCompanies } from "../core/investmentsStore.js";
+
+const fmt = (n) =>
+  Number(n).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
+const PAGE_SIZE = 8;
+
+/**
+ * Renders a paged list inside `container`.
+ * `renderItem(item)` must return an HTMLElement (li or similar).
+ * Pagination controls (Prev / Page N of M / Next) are appended after the list.
+ */
+function renderPaged(items, container, renderItem, page = 0) {
+  container.innerHTML = "";
+  const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
+  const clampedPage = Math.min(page, totalPages - 1);
+  const start = clampedPage * PAGE_SIZE;
+  const slice = items.slice(start, start + PAGE_SIZE);
+
+  if (items.length === 0) {
+    const li = document.createElement("li");
+    li.textContent = "No items found.";
+    li.style.color = "var(--text-muted)";
+    container.appendChild(li);
+    return;
+  }
+
+  slice.forEach((item) => container.appendChild(renderItem(item)));
+
+  if (totalPages > 1) {
+    const nav = document.createElement("li");
+    nav.classList.add("pagination-nav");
+    nav.innerHTML = `
+      <button class="action-btn" id="prevPage" ${clampedPage === 0 ? "disabled" : ""}>&#8249; Prev</button>
+      <span>Page ${clampedPage + 1} of ${totalPages}</span>
+      <button class="action-btn" id="nextPage" ${clampedPage >= totalPages - 1 ? "disabled" : ""}>Next &#8250;</button>
+    `;
+    nav
+      .querySelector("#prevPage")
+      .addEventListener("click", () =>
+        renderPaged(items, container, renderItem, clampedPage - 1),
+      );
+    nav
+      .querySelector("#nextPage")
+      .addEventListener("click", () =>
+        renderPaged(items, container, renderItem, clampedPage + 1),
+      );
+    container.appendChild(nav);
+  }
+}
 
 async function handleDeleteAllTransactions() {
   if (!(await confirmAction())) return;
@@ -100,25 +157,35 @@ function resetTransactionsList() {
 }
 
 // Event handler functions
-function handleRecurringTransactionsClick() {
+function renderRecurringTransactionsList() {
   const recurringTransactions = getAllRecurringTransactions();
-  const recurringTransactionsList = document.getElementById("transactionsList");
+  const list = document.getElementById("transactionsList");
+
+  renderPaged(recurringTransactions, list, (transaction) => {
+    const listItem = document.createElement("li");
+    listItem.classList.add("recurring-transaction-item");
+    const info = document.createElement("span");
+    info.textContent = `${transaction.description} - $${Number(transaction.amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${transaction.recurrenceInterval})`;
+    const deleteBtn = document.createElement("button");
+    deleteBtn.textContent = "Delete";
+    deleteBtn.className = "action-btn delete";
+    deleteBtn.addEventListener("click", async () => {
+      if (!(await confirmAction())) return;
+      deleteRecurringTemplate(transaction.id);
+      renderMessage("success", "Recurring transaction deleted.", "resetDB");
+      renderRecurringTransactionsList();
+    });
+    listItem.appendChild(info);
+    listItem.appendChild(deleteBtn);
+    return listItem;
+  });
+}
+
+function handleRecurringTransactionsClick() {
   const transactionsSettingsSection = document.getElementById(
     "transactionsSettings",
   );
-  recurringTransactionsList.innerHTML = ""; // Clear existing list
-
-  if (recurringTransactions.length === 0) {
-    const noTransactionsItem = document.createElement("li");
-    noTransactionsItem.textContent = "No recurring transactions found.";
-    recurringTransactionsList.appendChild(noTransactionsItem);
-  } else {
-    recurringTransactions.forEach((transaction) => {
-      const listItem = document.createElement("li");
-      listItem.textContent = `${transaction.date} - ${transaction.amount} - ${transaction.occurrenceCount}`;
-      recurringTransactionsList.appendChild(listItem);
-    });
-  }
+  renderRecurringTransactionsList();
 
   const backButton = document.createElement("button");
   backButton.classList.add("back-button");
@@ -131,32 +198,23 @@ function handleRecurringTransactionsClick() {
 }
 
 function handleAllTransactionHistoryClick() {
-  const transactions = getAllTransactionsWithRecurring();
-  const allTransactionHistoryList = document.getElementById("transactionsList");
-  const transactionsSettingsSection = document.getElementById(
-    "transactionsSettings",
-  );
-  allTransactionHistoryList.innerHTML = ""; // Clear existing list
+  const transactions = getAllTransactions();
+  const list = document.getElementById("transactionsList");
+  const section = document.getElementById("transactionsSettings");
 
-  if (transactions.length === 0) {
-    const noTransactionsItem = document.createElement("li");
-    noTransactionsItem.textContent = "No transactions found.";
-    allTransactionHistoryList.appendChild(noTransactionsItem);
-  } else {
-    transactions.forEach((transaction) => {
-      const listItem = document.createElement("li");
-      listItem.textContent = `${transaction.description} - ${transaction.amount} - ${transaction.type}`;
-      allTransactionHistoryList.appendChild(listItem);
-    });
-  }
+  renderPaged(transactions, list, (tx) => {
+    const li = document.createElement("li");
+    li.textContent = `${tx.date} — ${tx.description} — $${fmt(tx.amount)} (${tx.type})`;
+    return li;
+  });
 
   const backButton = document.createElement("button");
   backButton.classList.add("back-button");
   backButton.textContent = "Back";
-  transactionsSettingsSection.appendChild(backButton);
+  section.appendChild(backButton);
   backButton.addEventListener("click", () => {
     resetTransactionsList();
-    transactionsSettingsSection.removeChild(backButton);
+    section.removeChild(backButton);
   });
 }
 
@@ -231,62 +289,65 @@ function resetGoalsList() {
   initializeGoalListeners();
 }
 
-function handleCompletedGoalsClick() {
-  const completedGoals = getAllCompletedGoals();
-  const completedGoalsList = document.getElementById("goalsList");
-  const goalsSettingsSection = document.getElementById("goalsSettings");
-  completedGoalsList.innerHTML = ""; // Clear existing list
-
-  if (completedGoals.length === 0) {
-    const noGoalsItem = document.createElement("li");
-    noGoalsItem.textContent = "No completed goals found.";
-    completedGoalsList.appendChild(noGoalsItem);
-  } else {
-    completedGoals.forEach((goal) => {
-      const listItem = document.createElement("li");
-      listItem.textContent = `${goal.name} - ${goal.amount} - ${goal.status}`;
-      completedGoalsList.appendChild(listItem);
+function renderCompletedGoalsPage() {
+  const list = document.getElementById("goalsList");
+  const goals = getAllCompletedGoals();
+  renderPaged(goals, list, (goal) => {
+    const li = document.createElement("li");
+    li.classList.add("recurring-transaction-item");
+    const completedDate = goal.completedDate
+      ? new Date(goal.completedDate).toLocaleDateString()
+      : "—";
+    const info = document.createElement("span");
+    info.textContent = `${goal.name} — $${fmt(goal.targetAmount)} — completed ${completedDate}`;
+    const deleteBtn = document.createElement("button");
+    deleteBtn.textContent = "Delete";
+    deleteBtn.className = "action-btn delete";
+    deleteBtn.addEventListener("click", async () => {
+      if (!(await confirmAction())) return;
+      deleteCompletedGoal(goal.id);
+      renderMessage("success", "Completed goal deleted.", "resetDB");
+      renderCompletedGoalsPage();
     });
-  }
+    li.appendChild(info);
+    li.appendChild(deleteBtn);
+    return li;
+  });
+}
+
+function handleCompletedGoalsClick() {
+  const section = document.getElementById("goalsSettings");
+  renderCompletedGoalsPage();
 
   const backButton = document.createElement("button");
   backButton.textContent = "Back";
   backButton.classList.add("back-button");
-  goalsSettingsSection.appendChild(backButton);
+  section.appendChild(backButton);
   backButton.addEventListener("click", () => {
     resetGoalsList();
-    goalsSettingsSection.removeChild(backButton);
+    section.removeChild(backButton);
   });
 }
 
 function handleAllGoalsTransactionHistoryClick() {
-  const transactions = getAllRecurringTransactions();
-  const goalTransactions = transactions.filter(
-    (transaction) => transaction.type.toLowerCase() === "savings",
-  );
-  const allGoalsHistoryList = document.getElementById("goalsList");
-  const goalsSettingsSection = document.getElementById("goalsSettings");
-  allGoalsHistoryList.innerHTML = ""; // Clear existing list
+  const savingsTx = getAllTransactions().filter((t) => t.type === "Savings");
+  const list = document.getElementById("goalsList");
+  const section = document.getElementById("goalsSettings");
 
-  if (goalTransactions.length === 0) {
-    const noTransactionsItem = document.createElement("li");
-    noTransactionsItem.textContent = "No goal transactions found.";
-    allGoalsHistoryList.appendChild(noTransactionsItem);
-  } else {
-    goalTransactions.forEach((transaction) => {
-      const listItem = document.createElement("li");
-      listItem.textContent = `${transaction.name} - ${transaction.amount} - ${transaction.frequency}`;
-      allGoalsHistoryList.appendChild(listItem);
-    });
-  }
+  renderPaged(savingsTx, list, (tx) => {
+    const li = document.createElement("li");
+    const direction = tx.toTotal !== false ? "→ Savings" : "← Savings";
+    li.textContent = `${tx.date} — ${tx.description} — $${fmt(tx.amount)} — ${tx.category || "—"} (${direction})`;
+    return li;
+  });
 
   const backButton = document.createElement("button");
   backButton.classList.add("back-button");
   backButton.textContent = "Back";
-  goalsSettingsSection.appendChild(backButton);
+  section.appendChild(backButton);
   backButton.addEventListener("click", () => {
     resetGoalsList();
-    goalsSettingsSection.removeChild(backButton);
+    section.removeChild(backButton);
   });
 }
 
@@ -396,34 +457,27 @@ function handleInvestmentCompaniesClick() {
 }
 
 function handleInvestmentsTransactionHistoryClick() {
-  const transactions = getAllRecurringTransactions();
-  const investmentTransactions = transactions.filter(
-    (transaction) => transaction.type.toLowerCase() === "investment",
+  const investmentTx = getAllTransactions().filter(
+    (t) => t.type === "Investment",
   );
-  const allInvestmentHistoryList = document.getElementById("investmentsList");
-  const investmentSettingsSection =
-    document.getElementById("investmentSettings");
-  allInvestmentHistoryList.innerHTML = ""; // Clear existing list
+  const list = document.getElementById("investmentsList");
+  const section = document.getElementById("investmentSettings");
 
-  if (investmentTransactions.length === 0) {
-    const noTransactionsItem = document.createElement("li");
-    noTransactionsItem.textContent = "No investment transactions found.";
-    allInvestmentHistoryList.appendChild(noTransactionsItem);
-  } else {
-    investmentTransactions.forEach((transaction) => {
-      const listItem = document.createElement("li");
-      listItem.textContent = `${transaction.name} - ${transaction.amount}`;
-      allInvestmentHistoryList.appendChild(listItem);
-    });
-  }
+  renderPaged(investmentTx, list, (tx) => {
+    const li = document.createElement("li");
+    const direction =
+      tx.investmentDirection === "from" ? "← Investment" : "→ Investment";
+    li.textContent = `${tx.date} — ${tx.description} — $${fmt(tx.amount)} — ${tx.category || "—"} (${direction})`;
+    return li;
+  });
 
   const backButton = document.createElement("button");
   backButton.textContent = "Back";
   backButton.classList.add("back-button");
-  investmentSettingsSection.appendChild(backButton);
+  section.appendChild(backButton);
   backButton.addEventListener("click", () => {
     resetInvestmentsList();
-    investmentSettingsSection.removeChild(backButton);
+    section.removeChild(backButton);
   });
 }
 

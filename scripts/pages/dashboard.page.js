@@ -4,6 +4,12 @@ import { createChartUI, updateChartUI } from "../ui/chart.ui.js";
 import { calculateCashBalance } from "../calculators/cashBalance.js";
 import { getTotalByType } from "../calculators/transactions.calc.js";
 
+const fmt = (n) =>
+  Number(n).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
 let transactions = getAllTransactions();
 const chart = document.getElementById("dashboardChart");
 
@@ -38,10 +44,7 @@ const renderDashboardChart = () => {
 };
 
 renderDashboardChart();
-
-document.addEventListener("DOMContentLoaded", () => {
-  renderDashboard();
-});
+renderDashboard();
 
 function renderDashboardGoals(limit) {
   const goalsTableBody = document.getElementById("goalsTableBody");
@@ -68,8 +71,8 @@ function renderDashboardGoals(limit) {
     const row = document.createElement("tr");
     row.innerHTML = `
             <td>${goal.name}</td>
-            <td>$${goal.targetAmount.toFixed(2)}</td>
-            <td>$${goal.currentAmount.toFixed(2)}</td>
+            <td>$${fmt(goal.targetAmount)}</td>
+            <td>$${fmt(goal.currentAmount)}</td>
         `;
     goalsTableBody.appendChild(row);
   });
@@ -83,9 +86,9 @@ function renderCashBalance() {
   }
   const cashBalance = calculateCashBalance(transactions);
   if (cashBalance < 0) {
-    cashBalanceElement.textContent = `-$${Math.abs(cashBalance).toFixed(2)}`;
+    cashBalanceElement.textContent = `-$${fmt(Math.abs(cashBalance))}`;
   } else {
-    cashBalanceElement.textContent = `$${Number(cashBalance).toFixed(2)}`;
+    cashBalanceElement.textContent = `$${fmt(Number(cashBalance))}`;
   }
 }
 
@@ -132,7 +135,7 @@ function renderMediaTables(limit) {
       row.innerHTML = `
              <td>${transaction.date}</td>
              <td>${transaction.type}</td>
-             <td>$${transaction.amount.toFixed(2)}</td>
+             <td>$${fmt(transaction.amount)}</td>
            `;
       transactionsTableBody.appendChild(row);
     });
@@ -147,7 +150,7 @@ function renderMediaTables(limit) {
       row.innerHTML = `
            <td>${transaction.date}</td>
            <td>${transaction.type}</td>
-           <td>$${transaction.amount.toFixed(2)}</td>
+           <td>$${fmt(transaction.amount)}</td>
            <td>${transaction.description}</td>
          `;
       transactionsTableBody.appendChild(row);
@@ -166,7 +169,7 @@ function renderMediaTables(limit) {
       row.innerHTML = `
        <td>${transaction.date}</td>
        <td>${transaction.type}</td>
-       <td>$${transaction.amount.toFixed(2)}</td>
+       <td>$${fmt(transaction.amount)}</td>
        <td>${transaction.description}</td>
        <td>${transaction.category}</td>
      `;

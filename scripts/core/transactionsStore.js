@@ -3,8 +3,16 @@ import { setRecurrence } from "./dates.js";
 import { confirmAction } from "../ui/confirm.js";
 import { saveDB, loadDB } from "./storage.js";
 
+const fmt = (n) =>
+  Number(n).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
 export function getAllTransactions() {
-  return (loadDB().db.transactions || []).filter((t) => !t.isTemplate);
+  return (loadDB().db.transactions || [])
+    .filter((t) => !t.isTemplate)
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
 }
 
 export function getRecurringTransactionTemplates() {
@@ -75,6 +83,46 @@ export function processRecurringTransactions(force = false) {
         currentTransactions.push(newTransaction);
         newTransactionsAdded = true;
         processedToday = true;
+
+        // Update savings goal currentAmount for "to savings" transactions
+        if (
+          newTransaction.type === "Savings" &&
+          newTransaction.toTotal !== false
+        ) {
+          const goalsArr = db.goals || [];
+          const goalToUpdate = goalsArr.find(
+            (g) => g.name === newTransaction.category,
+          );
+          if (goalToUpdate) {
+            goalToUpdate.currentAmount =
+              parseFloat(goalToUpdate.currentAmount || 0) +
+              parseFloat(newTransaction.amount);
+
+            // Stop processing if the goal is now completed
+            if (
+              parseFloat(goalToUpdate.currentAmount) >=
+              parseFloat(goalToUpdate.targetAmount)
+            ) {
+              goalToUpdate.currentAmount = parseFloat(
+                goalToUpdate.targetAmount,
+              );
+              // Remove template and any future instances
+              currentTransactions = currentTransactions.filter(
+                (t) =>
+                  t.id !== recurringTransaction.id &&
+                  !(
+                    t.templateId === recurringTransaction.id &&
+                    t.date > recurringTransaction.nextDue
+                  ),
+              );
+              db.transactions = currentTransactions;
+              processedToday = true;
+              recurringTransaction.lastRecurringProcessDate = today;
+              newTransactionsAdded = true;
+              break;
+            }
+          }
+        }
       }
 
       // Update the original recurring transaction's next due date and last processed
@@ -129,6 +177,41 @@ export function processRecurringTransactions(force = false) {
         newTransactionsAdded = true;
         processedToday = true;
 
+        // Update savings goal currentAmount for "to savings" transactions
+        if (
+          newTransaction.type === "Savings" &&
+          newTransaction.toTotal !== false
+        ) {
+          const goalsArr = db.goals || [];
+          const goalToUpdate = goalsArr.find(
+            (g) => g.name === newTransaction.category,
+          );
+          if (goalToUpdate) {
+            goalToUpdate.currentAmount =
+              parseFloat(goalToUpdate.currentAmount || 0) +
+              parseFloat(newTransaction.amount);
+
+            // Stop processing if the goal is now completed
+            if (
+              parseFloat(goalToUpdate.currentAmount) >=
+              parseFloat(goalToUpdate.targetAmount)
+            ) {
+              goalToUpdate.currentAmount = parseFloat(
+                goalToUpdate.targetAmount,
+              );
+              // Remove template and any future instances
+              currentTransactions = currentTransactions.filter(
+                (t) =>
+                  t.id !== recurringTransaction.id &&
+                  !(t.templateId === recurringTransaction.id && t.date > today),
+              );
+              db.transactions = currentTransactions;
+              processedToday = true;
+              newTransactionsAdded = true;
+            }
+          }
+        }
+
         // Update the original recurring transaction's next due date and last processed
         recurringTransaction.lastProcessed = recurringTransaction.nextDue;
         recurringTransaction.nextDue = setRecurrence(
@@ -155,10 +238,7 @@ export function getAllTransactionsWithRecurring() {
   return loadDB().db.transactions || [];
 }
 
-const _today = new Date().toISOString().split("T")[0];
-if (loadDB().db.lastRecurringProcessDate !== _today) {
-  processRecurringTransactions();
-}
+processRecurringTransactions();
 
 let transactions = getAllTransactions();
 
@@ -221,7 +301,7 @@ export function renderResponsiveTransactions(
       row.innerHTML = `
        <td>${transaction.date}</td>
        <td>${typeDisplay}</td>
-       <td>$${transaction.amount.toFixed(2)}</td>
+       <td>$${fmt(transaction.amount)}</td>
        <td>${transaction.description}</td>
        <td>${transaction.category}</td>
        <td>
@@ -253,7 +333,7 @@ export function renderResponsiveTransactions(
       row.innerHTML = `
       <td>${transaction.date}</td>
       <td>${typeDisplay}</td>
-      <td>$${transaction.amount.toFixed(2)}</td>
+      <td>$${fmt(transaction.amount)}</td>
       <td>
       <button class="edit-btn" data-id="${transaction.id}">Edit</button>
       <button class="delete-btn" data-id="${transaction.id}">Delete</button>
@@ -292,7 +372,7 @@ export function renderResponsiveTransactions(
       row.innerHTML = `
       <td>${transaction.date}</td>
       <td>${typeDisplay}</td>
-           <td>$${transaction.amount.toFixed(2)}</td>
+           <td>$${fmt(transaction.amount)}</td>
            <td>${transaction.description}</td>
            <td>
            <button class="edit-btn" data-id="${transaction.id}">Edit</button>
@@ -331,7 +411,7 @@ export function renderResponsiveTransactions(
       row.innerHTML = `
        <td>${transaction.date}</td>
        <td>${typeDisplay}</td>
-       <td>$${transaction.amount.toFixed(2)}</td>
+       <td>$${fmt(transaction.amount)}</td>
        <td>${transaction.description}</td>
        <td>${transaction.category}</td>
        <td>
@@ -397,6 +477,7 @@ export function addTransaction(data) {
   loadDB().db.transactions.push(newTransaction);
   saveDB();
   transactions = getAllTransactions();
+  return newTransaction;
 }
 
 export function addRecurringTransaction(data, recurrenceInterval) {
@@ -420,11 +501,11 @@ export function addRecurringTransaction(data, recurrenceInterval) {
     createdDate: today,
   };
 
-  addTransaction(templateTransaction);
+  const savedTemplate = addTransaction(templateTransaction);
 
   // Immediately backfill all instances from start date to today
   backfillRecurringTransaction(
-    templateTransaction.id,
+    savedTemplate.id,
     startDate,
     today,
     recurrenceInterval,
@@ -492,6 +573,41 @@ function backfillRecurringTransaction(
       console.log(
         `Created instance #${occurrenceCount}: ${instance.description} for ${dateString}`,
       );
+
+      // Update savings goal currentAmount for "to savings" transactions
+      if (instance.type === "Savings" && instance.toTotal !== false) {
+        const goalsArr = db.goals || [];
+        const goalToUpdate = goalsArr.find((g) => g.name === instance.category);
+        if (goalToUpdate) {
+          goalToUpdate.currentAmount =
+            parseFloat(goalToUpdate.currentAmount || 0) +
+            parseFloat(instance.amount);
+
+          // Stop backfilling if the goal is now completed
+          if (
+            parseFloat(goalToUpdate.currentAmount) >=
+            parseFloat(goalToUpdate.targetAmount)
+          ) {
+            goalToUpdate.currentAmount = parseFloat(goalToUpdate.targetAmount);
+            // Remove the template and any future instances
+            db.transactions = db.transactions.filter(
+              (t) =>
+                t.id !== templateId &&
+                !(t.templateId === templateId && t.date > dateString),
+            );
+            template.occurrenceCount = occurrenceCount;
+            template.lastProcessed = dateString;
+            template.nextDue = setRecurrence(
+              new Date(dateString),
+              recurrenceInterval,
+            )
+              .toISOString()
+              .split("T")[0];
+            saveDB();
+            return;
+          }
+        }
+      }
     }
 
     // Move to next recurrence
@@ -511,6 +627,17 @@ function backfillRecurringTransaction(
 export function deleteTransaction(id) {
   const db = loadDB().db;
   db.transactions = db.transactions.filter((t) => t.id !== id);
+  saveDB();
+  transactions = getAllTransactions();
+}
+
+export function deleteRecurringTemplate(templateId) {
+  const today = new Date().toISOString().split("T")[0];
+  const db = loadDB().db;
+  db.transactions = db.transactions.filter(
+    (t) =>
+      t.id !== templateId && !(t.templateId === templateId && t.date > today),
+  );
   saveDB();
   transactions = getAllTransactions();
 }

@@ -122,6 +122,36 @@ section h2 {
     font-weight: bold;
 }
 
+.recurring-transaction-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pagination-nav {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 10px 0 4px !important;
+  border-bottom: none !important;
+  background: none !important;
+}
+
+.pagination-nav:hover {
+  background: none !important;
+}
+
+.pagination-nav span {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+
+
+
+
 .back-button {
   margin-top: 20px;
   padding: 8px 15px;
@@ -139,6 +169,27 @@ section h2 {
   background-color: var(--info);
   color: var(--text);
 }
+
+.action-btn  {
+  //margin-top: 20px;
+  padding: 8px 15px;
+  border-radius: 5px;
+  background-color: transparent;
+  color: var(--danger);
+  border: 1px solid var(--danger);
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.recurring-transaction-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+}
+
 
 /* RESPONSIVENESS */
 

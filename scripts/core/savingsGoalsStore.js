@@ -1,8 +1,17 @@
-import { getAllTransactionsWithRecurring } from "./transactionsStore.js";
+import {
+  getAllTransactionsWithRecurring,
+  deleteRecurringTemplate,
+} from "./transactionsStore.js";
 import { getTotalByType } from "../calculators/transactions.calc.js";
 import { createChartUI } from "../ui/chart.ui.js";
 import { saveDB, loadDB } from "./storage.js";
 import { confirmAction } from "../ui/confirm.js";
+
+const fmt = (n) =>
+  Number(n).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
 let goals = null;
 
@@ -39,7 +48,16 @@ export function resetAllGoalProgress() {
 
 export function renderSavingsChart() {
   const canvas = document.getElementById("savingsChart");
-  const transactions = getAllTransactionsWithRecurring();
+  // Exclude templates (recurring rules) and savings transactions that belong
+  // to completed goals so the chart only reflects active/current money.
+  const completedGoalNames = new Set(
+    (loadDB().db.completedGoals || []).map((g) => g.name),
+  );
+  const transactions = getAllTransactionsWithRecurring().filter(
+    (t) =>
+      t.isTemplate !== true &&
+      !(t.type === "Savings" && completedGoalNames.has(t.category)),
+  );
   if (transactions.length === 0) {
     console.log("No transactions found - rendering empty chart");
     createChartUI(canvas, ["No data"], [1]);
@@ -100,7 +118,7 @@ export function renderResponsiveGoalsTable() {
       let row = document.createElement("tr");
       row.innerHTML = `
       <td>${goal.name}</td>
-      <td>$${goal.currentAmount}/$${goal.targetAmount}</td>
+      <td>$${fmt(goal.currentAmount)}/$${fmt(goal.targetAmount)}</td>
       <td>
       <button class="action-btn changeFunds" data-name="${goal.name}">Add/Move Money</button>
       <div>
@@ -138,8 +156,8 @@ export function renderResponsiveGoalsTable() {
       let row = document.createElement("tr");
       row.innerHTML = `
       <td>${goal.name}</td>
-      <td>$${goal.targetAmount}</td>
-      <td>$${goal.currentAmount}</td>
+      <td>$${fmt(goal.targetAmount)}</td>
+      <td>$${fmt(goal.currentAmount)}</td>
       <td>
       <button class="action-btn changeFunds" data-name="${goal.name}">Add/Move Money</button>
       <div>
@@ -180,8 +198,8 @@ export function renderResponsiveGoalsTable() {
       let row = document.createElement("tr");
       row.innerHTML = `
     <td>${goal.name}</td>
-    <td>$${goal.targetAmount}</td>
-    <td>$${goal.currentAmount}</td>
+    <td>$${fmt(goal.targetAmount)}</td>
+    <td>$${fmt(goal.currentAmount)}</td>
     <td>
         <progress class="progress-bar" value="${goal.currentAmount}" max="${goal.targetAmount}"></progress>
       </td>
@@ -231,8 +249,8 @@ export function addGoal(goalData) {
         ? Math.max(...currentGoals.map((g) => g.id)) + 1
         : 1,
     name: goalData.name,
-    targetAmount: goalData.desiredAmount,
-    currentAmount: goalData.startingAmount || 0,
+    targetAmount: parseFloat(goalData.desiredAmount) || 0,
+    currentAmount: parseFloat(goalData.startingAmount) || 0,
   };
   currentGoals.push(newGoal);
   goals = currentGoals;
@@ -339,8 +357,8 @@ export function renderGoalsTable() {
     let row = document.createElement("tr");
     row.innerHTML = `
       <td>${goal.name}</td>
-      <td>$${goal.targetAmount}</td>
-      <td>$${goal.currentAmount}</td>
+      <td>$${fmt(goal.targetAmount)}</td>
+      <td>$${fmt(goal.currentAmount)}</td>
       <td>
         <progress class="progress-bar" value="${goal.currentAmount}" max="${goal.targetAmount}"></progress>
       </td>
@@ -500,13 +518,19 @@ function renderCompletedGoalMessage(goal) {
 
     if (messageContainer && messageText) {
       messageText.innerHTML = `<span class="boldText">Congratulations!</span> You have completed the goal "${goal.name}"!`;
+      messageContainer.style.transform = "translateX(1500%)";
       messageContainer.style.display = "flex";
-      messageContainer.style.transform = "translateX(0)";
-
-      // Hide the message after 4 seconds
-      setTimeout(() => {
-        messageContainer.style.transform = "translateX(1500%)";
-      }, 4000);
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => {
+          messageContainer.style.transform = "translateX(0)";
+          setTimeout(() => {
+            messageContainer.style.transform = "translateX(1500%)";
+            setTimeout(() => {
+              messageContainer.style.display = "none";
+            }, 500);
+          }, 4000);
+        }),
+      );
     }
   }
 }
@@ -526,7 +550,7 @@ function saveCompletedGoal(goal) {
 }
 
 export function changeGoalStatus(goal) {
-  if (goal.currentAmount >= goal.targetAmount) {
+  if (parseFloat(goal.currentAmount) >= parseFloat(goal.targetAmount)) {
     goal.isCompleted = true;
 
     // Add to completed goals locally
@@ -537,13 +561,75 @@ export function changeGoalStatus(goal) {
 
     // Remove from active goals after a brief delay
     setTimeout(() => {
+      // Stop any recurring savings transactions targeting this goal
+      const templatesToDelete = (loadDB().db.transactions || [])
+        .filter(
+          (t) =>
+            t.isTemplate && t.type === "Savings" && t.category === goal.name,
+        )
+        .map((t) => t.id);
+      templatesToDelete.forEach((id) => deleteRecurringTemplate(id));
+
       deleteGoal(goal.id);
     }, 500);
-  } else {
-    goal.isCompleted = false;
   }
+}
+
+/**
+ * Reconciles each goal's currentAmount against the actual savings transactions.
+ * If the net of all "to savings" minus "from savings" transactions exceeds the
+ * stored currentAmount (indicating the backfill never updated it), the stored
+ * value is corrected upward. It never decreases a stored amount so manually
+ * set starting balances are not overwritten.
+ */
+export function reconcileGoalAmountsFromTransactions() {
+  const db = loadDB().db;
+  const allTx = (db.transactions || []).filter(
+    (t) => t.isTemplate !== true && t.type === "Savings",
+  );
+  const currentGoals = db.goals || [];
+  let changed = false;
+
+  currentGoals.forEach((goal) => {
+    const toSum = allTx
+      .filter((t) => t.category === goal.name && t.toTotal !== false)
+      .reduce((s, t) => s + parseFloat(t.amount || 0), 0);
+    const fromSum = allTx
+      .filter((t) => t.category === goal.name && t.toTotal === false)
+      .reduce((s, t) => s + parseFloat(t.amount || 0), 0);
+    const netFromTx = toSum - fromSum;
+
+    if (netFromTx > parseFloat(goal.currentAmount || 0) + 0.001) {
+      // Cap at target so we don't overshoot
+      goal.currentAmount = Math.min(netFromTx, parseFloat(goal.targetAmount));
+      changed = true;
+    }
+  });
+
+  if (changed) {
+    saveDB();
+    goals = null; // force cache reload
+  }
+}
+
+export function checkAndCompleteGoals() {
+  const currentGoals = [...getAllGoals()];
+  currentGoals.forEach((goal) => {
+    if (
+      parseFloat(goal.targetAmount) > 0 &&
+      parseFloat(goal.currentAmount) >= parseFloat(goal.targetAmount)
+    ) {
+      changeGoalStatus(goal);
+    }
+  });
 }
 
 export function getAllCompletedGoals() {
   return loadDB().db.completedGoals || [];
+}
+
+export function deleteCompletedGoal(goalId) {
+  const db = loadDB().db;
+  db.completedGoals = (db.completedGoals || []).filter((g) => g.id !== goalId);
+  saveDB();
 }

@@ -15,7 +15,6 @@ const renderModal = createModal({
   bodyId: "companyModalBody",
 });
 
-
 // Make modal functions available globally for the investment form and transactions
 window.closeModal = renderModal.closeModal;
 window.openModal = renderModal.openModal;
@@ -29,6 +28,18 @@ const investmentsTable = document.querySelector(
 renderInvestmentTransactionsTable(investmentsTable, transactions, 3);
 const companiesTable = document.querySelector(".investment-companies-table");
 renderResponsiveCompaniesList(companiesTable, companies, transactions);
+
+window.refreshInvestments = () => {
+  const freshTransactions = getAllTransactions();
+  if (companiesTable)
+    renderResponsiveCompaniesList(
+      companiesTable,
+      getAllCompanies(),
+      freshTransactions,
+    );
+  if (investmentsTable)
+    renderInvestmentTransactionsTable(investmentsTable, freshTransactions, 3);
+};
 
 const addCompanyBtn = document.getElementById("addCompanyBtn");
 addCompanyBtn.addEventListener("click", async () => {

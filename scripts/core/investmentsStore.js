@@ -4,6 +4,12 @@ import { getTotalByType } from "../calculators/transactions.calc.js";
 import { saveDB, loadDB } from "./storage.js";
 import { confirmAction } from "../ui/confirm.js";
 
+const fmt = (n) =>
+  Number(n).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
 let transactions = getAllTransactionsWithRecurring();
 
 let companies = [];
@@ -126,7 +132,7 @@ export function renderInvestmentTransactionsTable(
     row.innerHTML = `
       <td>${tx.date}</td>
       <td>${tx.type}</td>
-      <td>$${tx.amount}</td>
+      <td>$${fmt(tx.amount)}</td>
       <td>N/A</td>
     `;
     tbody.appendChild(row);
@@ -142,14 +148,13 @@ export function renderInvestmentTransactionsTable(
 }
 
 function renderCompanyAmount(companyName, transactions) {
-  const companyTransactions = transactions.filter(
-    (tx) => tx.type === "Investment" && tx.category === companyName,
-  );
-  const totalAmount = companyTransactions.reduce(
-    (sum, tx) => sum + tx.amount,
-    0,
-  );
-  return totalAmount;
+  return transactions
+    .filter((tx) => tx.type === "Investment" && tx.category === companyName)
+    .reduce(
+      (sum, tx) =>
+        sum + (tx.investmentDirection === "from" ? -tx.amount : tx.amount),
+      0,
+    );
 }
 
 export function addInvestmentTransaction(transaction) {
@@ -231,7 +236,7 @@ export function renderResponsiveCompaniesList(table, companies, transactions) {
       const row = document.createElement("tr");
       row.innerHTML = `
         <td>${company.name}</td>
-        <td>$${renderCompanyAmount(company.name, transactions)}</td>
+        <td>$${fmt(renderCompanyAmount(company.name, transactions))}</td>
         <td>${company.ticker}</td>
         <td>
           <button class="editMoney-btn" data-edit-name="${company.name}">Add/Move Money</button>
@@ -273,7 +278,7 @@ export function renderResponsiveCompaniesList(table, companies, transactions) {
       const row = document.createElement("tr");
       row.innerHTML = `
       <td>${company.name}</td>
-      <td>$${renderCompanyAmount(company.name, transactions)}</td>
+      <td>$${fmt(renderCompanyAmount(company.name, transactions))}</td>
       <td>${company.ticker}</td>
         <td>${(await returnDividend(company.ticker)) === null ? "0.00 USD" : await returnDividend(company.ticker)}</td>
         <td>
@@ -318,7 +323,7 @@ export function renderCompaniesList(table, companies, transactions) {
     const row = document.createElement("tr");
     row.innerHTML = `
       <td>${company.name}</td>
-      <td>$${renderCompanyAmount(company.name, transactions)}</td>
+      <td>$${fmt(renderCompanyAmount(company.name, transactions))}</td>
       <td>${company.ticker}</td>
       <td>${await returnDividend(company.ticker)}</td>
       <td>

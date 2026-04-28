@@ -343,6 +343,47 @@ body {
 .confirm__button--cancel:hover { background: var(--highlight); }
 .confirm__button--confirm:hover { opacity: 0.85; }
 
+.completed-goal-message {
+  position: fixed;
+  z-index: 10001;
+  top: 20px;
+  right: 3%;
+  transform: translateX(1500%);
+  width: 325px;
+  height: 100px;
+  border-radius: 30px;
+  background-color: var(--bg-light);
+  border-left: 1px solid var(--primary);
+  border-bottom: 1px solid var(--primary);
+  border-top: 1px solid var(--secondary);
+  border-right: 1px solid var(--secondary);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  display: none;
+  align-items: center;
+  padding: 20px;
+  transition: transform 0.5s ease-in-out;
+}
+
+.completed-goal-message .celebration-icon {
+  font-size: 2.5rem;
+  margin-right: 15px;
+}
+
+.completed-goal-message .boldText {
+  font-weight: bold;
+  color: var(--text-muted);
+  display: block;
+  font-size: 1.2rem;
+}
+
+.completed-goal-message p {
+  font-size: 1rem;
+  color: var(--text);
+  position: absolute;
+  top: 20%;
+  left: 25%;
+}
+
 @media (min-width: 320px) {
  .modal__panel {
     width: 85%;

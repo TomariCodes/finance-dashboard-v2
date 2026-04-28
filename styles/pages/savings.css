@@ -76,6 +76,7 @@
 
 .savings-chart-section h2 {
   text-align: center;
+  margin-bottom: 1.25rem;
 }
 
 .btn {
@@ -217,45 +218,7 @@
   min-width: 40px;
 }
 
-.completed-goal-message {
-  position: fixed;
-  z-index: 1000;
-  top: 20px;
-  right: 3%;
-  transform: translateX(1500%);
-  width: 325px;
-  height: 100px;
-  border-radius: 30px;
-  background-color: var(--bg-light);
-  border-left: 1px solid var(--primary);
-  border-bottom: 1px solid var(--primary);
-  border-top: 1px solid var(--secondary);
-  border-right: 1px solid var(--secondary);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  display: none;
-  padding: 20px;
-  transition: transform 0.5s ease-in-out;
-}
-
-.completed-goal-message .celebration-icon {
-  font-size: 2.5rem;
-  margin-right: 15px;
-}
-
-.completed-goal-message .boldText {
-  font-weight: bold;
-  color: var(--text-muted);
-  display: block;
-  font-size: 1.2rem;
-}
-
-.completed-goal-message p {
-  font-size: 1rem;
-  color: var(--text);
-  position: absolute;
-  top: 20%;
-  left: 25%;
-}
+/* .completed-goal-message styles moved to global.css */
 
 /* MEDIA QUERIES */
 

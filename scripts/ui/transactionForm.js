@@ -19,7 +19,6 @@ import {
   removeFromSavingsGoal,
 } from "../calculators/cashBalance.js";
 
-
 export const getStatusColor = () => {
   return document.documentElement.classList.contains("dark")
     ? "hsl(9 26% 64%)"
@@ -96,7 +95,9 @@ function initializeTransactionForm(presetData = {}) {
       hasErrors = true;
     }
 
-    if (category === "") {
+    // Savings and Investment have their own dedicated category selectors in #extras;
+    // skip the generic #category check for those types.
+    if (category === "" && type !== "Savings" && type !== "Investment") {
       categoryStatus.innerHTML = `<svg class="statusIcon" xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="100" height="100" viewBox="0,0,256,256">
 <g fill="${getStatusColor()}" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="10" stroke-dasharray="" stroke-dashoffset="0" font-family="none" font-weight="none" font-size="none" text-anchor="none" style="mix-blend-mode: normal"><g transform="scale(5.12,5.12)"><path d="M25,2c-12.6907,0 -23,10.3093 -23,23c0,12.69071 10.3093,23 23,23c12.69071,0 23,-10.30929 23,-23c0,-12.6907 -10.30929,-23 -23,-23zM25,4c11.60982,0 21,9.39018 21,21c0,11.60982 -9.39018,21 -21,21c-11.60982,0 -21,-9.39018 -21,-21c0,-11.60982 9.39018,-21 21,-21zM25,11c-1.65685,0 -3,1.34315 -3,3c0,1.65685 1.34315,3 3,3c1.65685,0 3,-1.34315 3,-3c0,-1.65685 -1.34315,-3 -3,-3zM21,21v2h1h1v13h-1h-1v2h1h1h4h1h1v-2h-1h-1v-15h-1h-4z"></path></g></g>
 </svg>Please select a category.`;
@@ -191,182 +192,184 @@ function initializeTransactionForm(presetData = {}) {
 
     // Return early if there are validation errors (keep modal open)
     if (hasErrors) {
-      console.log("Form has validation errors, keeping modal open");
+      console.log("[transactionForm] Validation failed — not submitting");
       return;
     }
+
+    console.log(
+      "[transactionForm] Validation passed. type:",
+      type,
+      "amount:",
+      amount,
+      "date:",
+      date,
+      "recurrence:",
+      recurrence,
+    );
 
     // All validation passed - handle the form submission
     const editId = form.getAttribute("data-edit-id");
 
-    if (editId) {
-      // We're editing an existing transaction
-      const transactionData = {
-        date,
-        type,
-        description,
-        amount,
-        category,
-      };
+    try {
+      if (editId) {
+        // We're editing an existing transaction
+        const transactionData = {
+          date,
+          type,
+          description,
+          amount,
+          category,
+        };
 
-      // Add savings direction if it's a savings transaction
-      if (type === "Savings") {
-        const savingsDirection =
-          document.querySelector("#savingsDirection").value;
-          
-        transactionData.toTotal = savingsDirection === "to" ? true : false;
+        // Add savings direction if it's a savings transaction
+        if (type === "Savings") {
+          const savingsDirection =
+            document.querySelector("#savingsDirection").value;
 
-        if (savingsDirection === "to") {
-          addToSavingsGoal(amount, category, getAllGoals());
-        } else if (savingsDirection === "from") {
-          removeFromSavingsGoal(amount, category, getAllGoals());
-        }
-      }
+          transactionData.toTotal = savingsDirection === "to" ? true : false;
 
-      // Add investment direction if it's an investment transaction
-      if (type === "Investment") {
-        const investmentDirection = document.querySelector(
-          "#investmentDirection",
-        ).value;
-        transactionData.investmentDirection = investmentDirection;
-      }
-
-      if (recurrence && recurrence !== "") {
-        transactionData.isRecurring = true;
-        transactionData.recurrenceInterval = recurrence;
-      }
-
-      console.log("Updating transaction with ID:", editId, transactionData);
-
-      // Call the global updateTransaction function
-      if (window.updateTransaction) {
-        const success = window.updateTransaction(editId, transactionData);
-        if (success) {
-          console.log("Transaction updated successfully");
-          // Update charts
-          if (window.updateCharts) {
-            window.updateCharts();
-          }
-          // Close the modal by dispatching an event or calling the close method
-          if (window.closeModal) {
-            window.closeModal();
+          if (savingsDirection === "to") {
+            addToSavingsGoal(amount, category, getAllGoals());
+          } else if (savingsDirection === "from") {
+            removeFromSavingsGoal(amount, category, getAllGoals());
           }
         }
-      }
-    } else {
-      // We're adding a new transaction
-      const transactionData = {
-        date,
-        type,
-        description,
-        amount,
-        category,
-      };
 
-      // Add savings direction if it's a savings transaction
-      if (type === "Savings") {
-        const savingsCategory =
-          document.querySelector("#savingsCategory").value;
-        transactionData.category = savingsCategory; // Update the transaction data with savings category
-        console.log(
-          "Transaction data before adding to savings goal:",
-          transactionData,
-        );
-        const savingsDirection =
-          document.querySelector("#savingsDirection").value;
-        transactionData.toTotal = savingsDirection === "to" ? true : false;
-
-        if (savingsDirection === "to") {
-          addToSavingsGoal(amount, savingsCategory, getAllGoals());
-          const goal = getAllGoals().find((g) => g.name === savingsCategory);
-          if (goal) {
-            changeGoalStatus(goal);
-          }
-          console.log("Added to savings goal:", amount, savingsCategory);
-          console.log(
-            "Transaction data after adding to savings goal:",
-            transactionData,
+        // Add investment direction if it's an investment transaction
+        if (type === "Investment") {
+          const investmentCategoryEl = document.querySelector(
+            "#investmentCategory",
           );
-        } else if (savingsDirection === "from") {
-          removeFromSavingsGoal(amount, savingsCategory, getAllGoals());
+          const investmentDirection = document.querySelector(
+            "#investmentDirection",
+          ).value;
+          if (investmentCategoryEl && investmentCategoryEl.value) {
+            const co = getAllCompanies().find(
+              (c) => c.id == investmentCategoryEl.value,
+            );
+            if (co) transactionData.category = co.name;
+          }
+          transactionData.investmentDirection = investmentDirection;
         }
-      }
 
-      // Add investment direction if it's an investment transaction
-      if (type === "Investment") {
-        const investmentDirection = document.querySelector(
-          "#investmentDirection",
-        ).value;
-        transactionData.investmentDirection = investmentDirection;
-      }
+        if (recurrence && recurrence !== "") {
+          transactionData.isRecurring = true;
+          transactionData.recurrenceInterval = recurrence;
+        }
 
-      console.log("Transaction submitted successfully:", transactionData);
+        console.log("Updating transaction with ID:", editId, transactionData);
 
-      // Check if this is a recurring transaction
-      if (recurrence && recurrence !== "") {
-        console.log(
-          "Creating recurring transaction with interval:",
-          recurrence,
-        );
-        addRecurringTransaction(transactionData, recurrence);
+        // Call the global updateTransaction function
+        if (window.updateTransaction) {
+          window.updateTransaction(editId, transactionData);
+          if (window.updateCharts) window.updateCharts();
+          if (type === "Investment" && window.refreshInvestments)
+            window.refreshInvestments();
+        }
       } else {
-        addTransaction(transactionData);
-      }
+        // We're adding a new transaction
+        const transactionData = {
+          date,
+          type,
+          description,
+          amount,
+          category,
+        };
 
-      if (type === "Savings") {
-        console.log("Savings transaction created:", transactionData);
-        const savingsDirection =
-          document.querySelector("#savingsDirection").value;
-        const savingsCategory =
-          document.querySelector("#savingsCategory").value;
+        // Add savings direction if it's a savings transaction
+        if (type === "Savings") {
+          const savingsCategory =
+            document.querySelector("#savingsCategory").value;
+          transactionData.category = savingsCategory;
+          const savingsDirection =
+            document.querySelector("#savingsDirection").value;
+          transactionData.toTotal = savingsDirection === "to" ? true : false;
+        }
 
-        console.log(
-          "Savings transaction processed with direction:",
-          savingsDirection,
-          "and category:",
-          savingsCategory,
-        );
+        // Add investment direction if it's an investment transaction
+        if (type === "Investment") {
+          const investmentCategoryEl = document.querySelector(
+            "#investmentCategory",
+          );
+          const investmentDirection = document.querySelector(
+            "#investmentDirection",
+          ).value;
+          if (investmentCategoryEl && investmentCategoryEl.value) {
+            const co = getAllCompanies().find(
+              (c) => c.id == investmentCategoryEl.value,
+            );
+            if (co) transactionData.category = co.name;
+          }
+          transactionData.investmentDirection = investmentDirection;
+        }
 
-        renderGoalsTable(getAllGoals());
-      }
-      // Refresh the transactions list in the UI if available
-      if (window.refreshTransactions) {
-        window.refreshTransactions();
-      }
+        // Check if this is a recurring transaction
+        if (recurrence && recurrence !== "") {
+          console.log(
+            "Creating recurring transaction with interval:",
+            recurrence,
+          );
+          addRecurringTransaction(transactionData, recurrence);
 
-      // Update charts
-      if (window.updateCharts) {
-        window.updateCharts();
-      }
+          if (type === "Savings" && transactionData.toTotal !== false) {
+            const goal = getAllGoals().find(
+              (g) => g.name === transactionData.category,
+            );
+            if (goal) changeGoalStatus(goal);
+            if (window.renderSavingsSummary) window.renderSavingsSummary();
+          }
+        } else {
+          addTransaction(transactionData);
 
-      // Close the modal after successful add
-      if (window.closeModal) {
-        window.closeModal();
+          if (type === "Savings") {
+            const savingsDirection =
+              transactionData.toTotal !== false ? "to" : "from";
+            if (savingsDirection === "to") {
+              addToSavingsGoal(amount, transactionData.category, getAllGoals());
+              const goal = getAllGoals().find(
+                (g) => g.name === transactionData.category,
+              );
+              if (goal) changeGoalStatus(goal);
+            } else {
+              removeFromSavingsGoal(
+                amount,
+                transactionData.category,
+                getAllGoals(),
+              );
+            }
+            if (window.renderSavingsSummary) window.renderSavingsSummary();
+          }
+        }
+
+        if (type === "Savings") renderGoalsTable(getAllGoals());
+        if (window.refreshTransactions) window.refreshTransactions();
+        if (window.updateCharts) window.updateCharts();
+        if (type === "Investment" && window.refreshInvestments)
+          window.refreshInvestments();
       }
+    } catch (err) {
+      console.error("[transactionForm] Submission error:", err);
+    } finally {
+      // Always close the modal and reset the form regardless of errors
+      console.log(
+        "[transactionForm] closing modal. window.closeModal:",
+        typeof window.closeModal,
+      );
+      if (window.closeModal) window.closeModal();
+
+      form.reset();
+      typeInput.disabled = false;
+      const savingsCatEl = document.querySelector("#savingsCategory");
+      if (savingsCatEl) savingsCatEl.disabled = false;
+      const investmentCatEl = document.querySelector("#investmentCategory");
+      if (investmentCatEl) investmentCatEl.disabled = false;
+      form.removeAttribute("data-edit-id");
+      amountStatus.textContent = "";
+      descriptionStatus.textContent = "";
+      dateStatus.textContent = "";
+      typeStatus.textContent = "";
+      categoryStatus.textContent = "";
     }
-
-    // Clear the form
-    form.reset();
-
-    // Re-enable any disabled fields and clear preset data
-    typeInput.disabled = false;
-    const savingsCategory = document.querySelector("#savingsCategory");
-    if (savingsCategory) {
-      savingsCategory.disabled = false;
-    }
-    const investmentCategory = document.querySelector("#investmentCategory");
-    if (investmentCategory) {
-      investmentCategory.disabled = false;
-    }
-
-    // Clear the edit ID attribute to ensure fresh state for next use
-    form.removeAttribute("data-edit-id");
-
-    // Clear any remaining status messages
-    amountStatus.textContent = "";
-    descriptionStatus.textContent = "";
-    dateStatus.textContent = "";
-    typeStatus.textContent = "";
-    categoryStatus.textContent = "";
   };
 
   // Handle preset data if provided
@@ -391,7 +394,10 @@ function initializeTransactionForm(presetData = {}) {
       }
     });
 
+    const categoryFieldWrapper = categoryInput.closest(".mb-3");
+
     if (typeInput.value === "Income") {
+      if (categoryFieldWrapper) categoryFieldWrapper.style.display = "";
       categoryInput.innerHTML = `
        <option value="">Select category</option>
           <option value="salary">Salary</option>
@@ -399,15 +405,14 @@ function initializeTransactionForm(presetData = {}) {
           <option value="investments">Investments</option>
           <option value="gifts">Gifts</option>
           <option value="other">Other</option>`;
-    } else if (typeInput.value === "Savings") {
-      categoryInput.innerHTML = `
-       <option value="">Select category</option>
-          <option value="travel">Travel</option>
-          <option value="freedom">Financial Freedom</option>
-          <option value="retirement">Retirement</option>
-          <option value="gifts">Gifts</option>
-          <option value="other">Other</option>`;
+    } else if (
+      typeInput.value === "Savings" ||
+      typeInput.value === "Investment"
+    ) {
+      // Savings and Investment use dedicated selectors in #extras; hide the generic one.
+      if (categoryFieldWrapper) categoryFieldWrapper.style.display = "none";
     } else {
+      if (categoryFieldWrapper) categoryFieldWrapper.style.display = "";
       categoryInput.innerHTML = `
       <option value="">Select category</option>
       <option value="food">Food & Groceries</option>
@@ -523,7 +528,7 @@ function initializeTransactionForm(presetData = {}) {
           inputFirst.disabled = true;
         }
         // Default to "to" direction for adding money to savings
-        //inputSecond.value = "to";
+        inputSecond.value = "to";
       }
     } else {
       // Clear extra fields for other transaction types
@@ -559,7 +564,7 @@ function initializeTransactionForm(presetData = {}) {
 
         if (savingsDirection) {
           console.log("Setting savings direction to: to");
-          //savingsDirection.value = "to";
+          savingsDirection.value = "to";
         } else {
           console.log("Savings direction field not found");
         }

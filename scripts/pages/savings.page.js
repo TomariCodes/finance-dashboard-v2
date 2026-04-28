@@ -4,7 +4,12 @@ import {
   getAllGoals,
   renderSavingsChart,
   renderResponsiveGoalsTable,
+  checkAndCompleteGoals,
+  reconcileGoalAmountsFromTransactions,
 } from "../core/savingsGoalsStore.js";
+
+// Fix any goal amounts that were never updated by recurring transaction backfill
+reconcileGoalAmountsFromTransactions();
 
 renderSavingsSummary(getAllGoals());
 // Make functions available globally for goal updates
@@ -22,6 +27,7 @@ window.renderSavingsChart = renderSavingsChart;
 window.closeModal = renderModal.closeModal;
 window.openModal = renderModal.openModal;
 renderResponsiveGoalsTable();
+checkAndCompleteGoals();
 
 document.getElementById("addGoalBtn").addEventListener("click", async () => {
   // Load the goal form HTML

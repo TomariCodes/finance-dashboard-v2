@@ -1,5 +1,5 @@
 import { loadDB } from "../core/storage.js";
-import { createModal } from "modal.js";
+import { createModal } from "./modal.js";
 
 const db = loadDB(); // Ensure DB is loaded before rendering settings
 
