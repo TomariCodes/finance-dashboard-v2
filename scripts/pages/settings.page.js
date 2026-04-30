@@ -25,7 +25,7 @@ const fmt = (n) =>
     maximumFractionDigits: 2,
   });
 
-const PAGE_SIZE = 8;
+const PAGE_SIZE = 5;
 
 /**
  * Renders a paged list inside `container`.
@@ -515,7 +515,8 @@ function handleInvestmentCategoriesClick() {
 // Initialize static event listeners
 document.getElementById("saveDB").addEventListener("click", () => {
   const result = saveDB();
-  renderMessage(result.status, result.message, result.function);
+  console.log("Save DB result:", result);
+  renderMessage(result.status, result.message, "saveDB");
 });
 
 document.getElementById("deleteAllData").addEventListener("click", async () => {

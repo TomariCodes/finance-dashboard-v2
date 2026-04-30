@@ -238,7 +238,11 @@ export function getAllTransactionsWithRecurring() {
   return loadDB().db.transactions || [];
 }
 
-processRecurringTransactions();
+try {
+  processRecurringTransactions();
+} catch (e) {
+  console.error("processRecurringTransactions failed:", e);
+}
 
 let transactions = getAllTransactions();
 
@@ -251,16 +255,39 @@ export function handleEditTransaction(id) {
 
 export async function handleDeleteTransaction(id) {
   if (!(await confirmAction())) return;
+
+  // Before removing the transaction, reverse its effect on the associated
+  // savings goal so the goal's currentAmount stays in sync.
+  const db = loadDB().db;
+  const tx = (db.transactions || []).find((t) => t.id === id);
+  if (tx && tx.type === "Savings") {
+    const goal = (db.goals || []).find((g) => g.name === tx.category);
+    if (goal) {
+      const amt = parseFloat(tx.amount || 0);
+      if (tx.toTotal !== false) {
+        // Transaction was adding to the goal — subtract it back
+        goal.currentAmount = Math.max(
+          0,
+          parseFloat(goal.currentAmount || 0) - amt,
+        );
+      } else {
+        // Transaction was removing from the goal — add it back
+        goal.currentAmount = parseFloat(goal.currentAmount || 0) + amt;
+      }
+    }
+  }
+
   deleteTransaction(id);
   renderResponsiveTransactions();
   if (window.updateCharts) window.updateCharts();
+  if (window.renderSavingsSummary) window.renderSavingsSummary();
+  if (window.renderGoalsTable) window.renderGoalsTable();
 }
 
 export function renderResponsiveTransactions(
   transactionsToRender = transactions,
 ) {
   const userWidth = window.innerWidth;
-  console.log(userWidth);
 
   const transactionsTableBody = document.getElementById(
     "transactionsTableBody",
@@ -271,6 +298,7 @@ export function renderResponsiveTransactions(
     return;
   }
   transactionsTableBody.innerHTML = "";
+
   const validTransactions = transactionsToRender.filter(
     (transaction) =>
       transaction &&
@@ -282,17 +310,26 @@ export function renderResponsiveTransactions(
       transaction.amount !== undefined &&
       transaction.category,
   );
+
   const headRow = document.getElementById("transactionsTableHeadRow");
+
+  // Always reset headers based on current viewport width to prevent duplicates on re-render
+  if (userWidth >= 1400) {
+    headRow.innerHTML = `<th>Date</th><th>Type</th><th>Amount</th><th>Description</th><th>Category</th><th>Actions</th>`;
+  } else if (userWidth >= 700) {
+    headRow.innerHTML = `<th>Date</th><th>Type</th><th>Amount</th><th>Description</th><th>Actions</th>`;
+  } else {
+    headRow.innerHTML = `<th>Date</th><th>Type</th><th>Amount</th><th>Actions</th>`;
+  }
 
   if (validTransactions.length === 0) {
     const row = document.createElement("tr");
-    const colSpan = headRow?.children?.length || 3;
-    row.innerHTML = `<td colspan="${colSpan}" style="text-align: center; padding: 20px;">No data to display</td>`;
+    row.innerHTML = `<td colspan="${headRow.children.length}" style="text-align: center; padding: 20px;">No data to display</td>`;
     transactionsTableBody.appendChild(row);
     return;
   }
 
-  if (headRow.children.length >= 6) {
+  if (userWidth >= 1400) {
     validTransactions.forEach((transaction) => {
       const row = document.createElement("tr");
       const typeDisplay = transaction.isRecurring
@@ -320,11 +357,7 @@ export function renderResponsiveTransactions(
       );
       transactionsTableBody.appendChild(row);
     });
-  } else if (userWidth <= 400 && headRow.children.length <= 4) {
-    headRow.maxLength = 4;
-    const actionTh = document.createElement("th");
-    actionTh.innerHTML = "Actions";
-    headRow.appendChild(actionTh);
+  } else if (userWidth >= 700) {
     validTransactions.forEach((transaction) => {
       const row = document.createElement("tr");
       const typeDisplay = transaction.isRecurring
@@ -334,6 +367,7 @@ export function renderResponsiveTransactions(
       <td>${transaction.date}</td>
       <td>${typeDisplay}</td>
       <td>$${fmt(transaction.amount)}</td>
+      <td>${transaction.description}</td>
       <td>
       <button class="edit-btn" data-id="${transaction.id}">Edit</button>
       <button class="delete-btn" data-id="${transaction.id}">Delete</button>
@@ -351,19 +385,7 @@ export function renderResponsiveTransactions(
       );
       transactionsTableBody.appendChild(row);
     });
-  } else if (
-    userWidth >= 700 &&
-    userWidth < 1400 &&
-    headRow.children.length <= 5
-  ) {
-    console.log("Rendering medium screen transactions");
-    headRow.maxLength = 5;
-    const descriptionTh = document.createElement("th");
-    descriptionTh.innerHTML = "Description";
-    headRow.appendChild(descriptionTh);
-    const actionTh = document.createElement("th");
-    actionTh.innerHTML = "Actions";
-    headRow.appendChild(actionTh);
+  } else {
     validTransactions.forEach((transaction) => {
       const row = document.createElement("tr");
       const typeDisplay = transaction.isRecurring
@@ -372,53 +394,12 @@ export function renderResponsiveTransactions(
       row.innerHTML = `
       <td>${transaction.date}</td>
       <td>${typeDisplay}</td>
-           <td>$${fmt(transaction.amount)}</td>
-           <td>${transaction.description}</td>
-           <td>
-           <button class="edit-btn" data-id="${transaction.id}">Edit</button>
-           <button class="delete-btn" data-id="${transaction.id}">Delete</button>
-           </td>
-         `;
-
-      const editBtn = row.querySelector(".edit-btn");
-      const deleteBtn = row.querySelector(".delete-btn");
-
-      editBtn.addEventListener("click", () =>
-        handleEditTransaction(transaction.id),
-      );
-      deleteBtn.addEventListener("click", () =>
-        handleDeleteTransaction(transaction.id),
-      );
-      transactionsTableBody.appendChild(row);
-    });
-  } else if (userWidth >= 1400 && headRow.children.length <= 6) {
-    console.log("Rendering large screen transactions");
-    headRow.maxLength = 6;
-    const descriptionTh = document.createElement("th");
-    const categoryTh = document.createElement("th");
-    const actionTh = document.createElement("th");
-    descriptionTh.innerHTML = "Description";
-    categoryTh.innerHTML = "Category";
-    headRow.appendChild(descriptionTh);
-    headRow.appendChild(categoryTh);
-    actionTh.innerHTML = "Actions";
-    headRow.appendChild(actionTh);
-    validTransactions.forEach((transaction) => {
-      const row = document.createElement("tr");
-      const typeDisplay = transaction.isRecurring
-        ? `${transaction.type} 🔄`
-        : transaction.type;
-      row.innerHTML = `
-       <td>${transaction.date}</td>
-       <td>${typeDisplay}</td>
-       <td>$${fmt(transaction.amount)}</td>
-       <td>${transaction.description}</td>
-       <td>${transaction.category}</td>
-       <td>
-        <button class="edit-btn" data-id="${transaction.id}">Edit</button>
-        <button class="delete-btn" data-id="${transaction.id}">Delete</button>
+      <td>$${fmt(transaction.amount)}</td>
+      <td>
+      <button class="edit-btn" data-id="${transaction.id}">Edit</button>
+      <button class="delete-btn" data-id="${transaction.id}">Delete</button>
       </td>
-     `;
+      `;
 
       const editBtn = row.querySelector(".edit-btn");
       const deleteBtn = row.querySelector(".delete-btn");

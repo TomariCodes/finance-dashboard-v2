@@ -48,15 +48,13 @@ export function resetAllGoalProgress() {
 
 export function renderSavingsChart() {
   const canvas = document.getElementById("savingsChart");
-  // Exclude templates (recurring rules) and savings transactions that belong
-  // to completed goals so the chart only reflects active/current money.
-  const completedGoalNames = new Set(
-    (loadDB().db.completedGoals || []).map((g) => g.name),
-  );
+  // Only include savings transactions for currently active goals so the chart
+  // excludes money that has already been moved out (completed/deleted goals).
+  const activeGoalNames = new Set((loadDB().db.goals || []).map((g) => g.name));
   const transactions = getAllTransactionsWithRecurring().filter(
     (t) =>
       t.isTemplate !== true &&
-      !(t.type === "Savings" && completedGoalNames.has(t.category)),
+      (t.type !== "Savings" || activeGoalNames.has(t.category)),
   );
   if (transactions.length === 0) {
     console.log("No transactions found - rendering empty chart");
@@ -109,7 +107,8 @@ export function renderResponsiveGoalsTable() {
   if (userWidth >= 320 && userWidth < 768) {
     const headRow = document.getElementById("goalsTableHeadRow");
     const totalTh = document.createElement("th");
-    totalTh.innerHTML = "Target/Current";
+    totalTh.classList.add("target-current");
+    totalTh.innerHTML = "<span>Target</span>/<span>Current</span>";
     headRow.appendChild(totalTh);
     const actionTh = document.createElement("th");
     actionTh.innerHTML = "Actions";
@@ -118,7 +117,7 @@ export function renderResponsiveGoalsTable() {
       let row = document.createElement("tr");
       row.innerHTML = `
       <td>${goal.name}</td>
-      <td>$${fmt(goal.currentAmount)}/$${fmt(goal.targetAmount)}</td>
+      <td class="target-current"><span>$${fmt(goal.currentAmount)}</span>/<span>$${fmt(goal.targetAmount)}</span></td>
       <td>
       <button class="action-btn changeFunds" data-name="${goal.name}">Add/Move Money</button>
       <div>
@@ -312,6 +311,7 @@ export function updateGoal(idOrName, updatedData) {
     console.log("Goal after update:", currentGoals[goalIndex]);
     console.log("All goals after update:", currentGoals);
 
+    const updatedGoal = currentGoals[goalIndex];
     goals = currentGoals;
     loadDB().db.goals = goals;
     saveDB();
@@ -328,6 +328,17 @@ export function updateGoal(idOrName, updatedData) {
     // Update savings chart
     if (window.renderSavingsChart) {
       window.renderSavingsChart();
+    }
+
+    // If the goal is now complete, remove it immediately without waiting for
+    // a page reload.  This covers both the "edit goal" path (goalForm.js) and
+    // the "add transaction" path (transactionForm.js → addToSavingsGoal).
+    if (
+      parseFloat(updatedGoal.targetAmount) > 0 &&
+      parseFloat(updatedGoal.currentAmount) >=
+        parseFloat(updatedGoal.targetAmount)
+    ) {
+      changeGoalStatus(updatedGoal);
     }
 
     console.log("updateGoal completed successfully");
@@ -433,9 +444,17 @@ export function deleteGoal(idOrName) {
   }
   if (goalIndex === -1) throw new Error("Goal not found");
 
+  const deletedGoalName = currentGoals[goalIndex].name;
   currentGoals.splice(goalIndex, 1);
   goals = currentGoals;
-  loadDB().db.goals = goals;
+
+  const db = loadDB().db;
+  db.goals = goals;
+  // Remove all savings transactions associated with this goal so the cash
+  // balance reflects the returned money.
+  db.transactions = (db.transactions || []).filter(
+    (t) => !(t.type === "Savings" && t.category === deletedGoalName),
+  );
   saveDB();
   goals = null;
 
@@ -517,7 +536,7 @@ function renderCompletedGoalMessage(goal) {
     const messageText = document.getElementById("completedGoalText");
 
     if (messageContainer && messageText) {
-      messageText.innerHTML = `<span class="boldText">Congratulations!</span> You have completed the goal "${goal.name}"!`;
+      messageText.innerHTML = `<span class="boldText">Congratulations!</span> You have completed ${goal.name}!`;
       messageContainer.style.transform = "translateX(1500%)";
       messageContainer.style.display = "flex";
       requestAnimationFrame(() =>
@@ -527,7 +546,7 @@ function renderCompletedGoalMessage(goal) {
             messageContainer.style.transform = "translateX(1500%)";
             setTimeout(() => {
               messageContainer.style.display = "none";
-            }, 500);
+            }, 2000);
           }, 4000);
         }),
       );
@@ -539,6 +558,8 @@ function renderCompletedGoalMessage(goal) {
 function saveCompletedGoal(goal) {
   const db = loadDB().db;
   if (!Array.isArray(db.completedGoals)) db.completedGoals = [];
+  // Avoid duplicate entries if called more than once for the same goal
+  if (db.completedGoals.some((g) => g.id === goal.id)) return;
   db.completedGoals.push({
     id: goal.id,
     name: goal.name,
@@ -549,28 +570,44 @@ function saveCompletedGoal(goal) {
   saveDB();
 }
 
+// Track goals currently being completed to prevent double-fire
+const _completingGoalIds = new Set();
+
 export function changeGoalStatus(goal) {
   if (parseFloat(goal.currentAmount) >= parseFloat(goal.targetAmount)) {
+    // Guard: skip if this goal is already in the process of being completed
+    if (_completingGoalIds.has(goal.id)) return;
+    _completingGoalIds.add(goal.id);
+
     goal.isCompleted = true;
 
     // Add to completed goals locally
     saveCompletedGoal(goal);
 
-    // Show congratulations message
+    // Show congratulations message (animates independently via rAF/setTimeout)
     renderCompletedGoalMessage(goal);
 
-    // Remove from active goals after a brief delay
-    setTimeout(() => {
-      // Stop any recurring savings transactions targeting this goal
-      const templatesToDelete = (loadDB().db.transactions || [])
-        .filter(
-          (t) =>
-            t.isTemplate && t.type === "Savings" && t.category === goal.name,
-        )
-        .map((t) => t.id);
-      templatesToDelete.forEach((id) => deleteRecurringTemplate(id));
+    // Stop any recurring savings transactions targeting this goal
+    const templatesToDelete = (loadDB().db.transactions || [])
+      .filter(
+        (t) => t.isTemplate && t.type === "Savings" && t.category === goal.name,
+      )
+      .map((t) => t.id);
+    templatesToDelete.forEach((id) => deleteRecurringTemplate(id));
 
-      deleteGoal(goal.id);
+    // Remove the goal after a short delay so the congratulations message is
+    // visible before the row disappears.
+    setTimeout(() => {
+      _completingGoalIds.delete(goal.id);
+      try {
+        deleteGoal(goal.id);
+      } catch {
+        // Goal may have already been removed; force a fresh re-render
+        goals = null;
+        renderGoalsTable();
+        if (window.renderSavingsSummary) window.renderSavingsSummary();
+        if (window.renderSavingsChart) window.renderSavingsChart();
+      }
     }, 500);
   }
 }

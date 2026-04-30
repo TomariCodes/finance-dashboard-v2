@@ -232,7 +232,15 @@
   }
 
   .investments-chart-section {
+    min-height: unset;
+    max-height: 280px;
+    padding: 10px;
     margin-bottom: 20px;
+  }
+
+  .investments-chart {
+    max-height: 210px;
+    min-height: unset;
   }
 
   .investments-table-section {
@@ -249,7 +257,6 @@
 
   #footer-container {
     margin-top: 4rem;
-
   }
 }
 

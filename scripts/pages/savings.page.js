@@ -4,6 +4,7 @@ import {
   getAllGoals,
   renderSavingsChart,
   renderResponsiveGoalsTable,
+  renderGoalsTable,
   checkAndCompleteGoals,
   reconcileGoalAmountsFromTransactions,
 } from "../core/savingsGoalsStore.js";
@@ -22,6 +23,8 @@ const renderModal = createModal({
 
 // Make chart renderer available globally
 window.renderSavingsChart = renderSavingsChart;
+// Make goals table renderer available globally (used by transaction-delete path)
+window.renderGoalsTable = renderGoalsTable;
 
 // Make modal functions available globally for the goal form and savings transactions
 window.closeModal = renderModal.closeModal;

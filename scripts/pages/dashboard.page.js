@@ -3,6 +3,7 @@ import { getAllGoals } from "../core/savingsGoalsStore.js";
 import { createChartUI, updateChartUI } from "../ui/chart.ui.js";
 import { calculateCashBalance } from "../calculators/cashBalance.js";
 import { getTotalByType } from "../calculators/transactions.calc.js";
+import { loadDB } from "../core/storage.js";
 
 const fmt = (n) =>
   Number(n).toLocaleString("en-US", {
@@ -14,7 +15,14 @@ let transactions = getAllTransactions();
 const chart = document.getElementById("dashboardChart");
 
 const renderDashboardChart = () => {
-  const monthlyTransactions = transactions.filter((transaction) => {
+  const completedGoalNames = new Set(
+    (loadDB().db.completedGoals || []).map((g) => g.name),
+  );
+  const activeTransactions = transactions.filter(
+    (t) => !(t.type === "Savings" && completedGoalNames.has(t.category)),
+  );
+
+  const monthlyTransactions = activeTransactions.filter((transaction) => {
     const transactionDate = new Date(transaction.date);
     const currentDate = new Date();
     return (
@@ -31,10 +39,10 @@ const renderDashboardChart = () => {
     return;
   }
 
-  const incomeTotal = getTotalByType(transactions, "Income");
-  const expenseTotal = getTotalByType(transactions, "Expense");
-  const billTotal = getTotalByType(transactions, "Bill");
-  const savingsTotal = getTotalByType(transactions, "Savings");
+  const incomeTotal = getTotalByType(activeTransactions, "Income");
+  const expenseTotal = getTotalByType(activeTransactions, "Expense");
+  const billTotal = getTotalByType(activeTransactions, "Bill");
+  const savingsTotal = getTotalByType(activeTransactions, "Savings");
 
   createChartUI(
     chart,
