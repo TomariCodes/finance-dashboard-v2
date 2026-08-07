@@ -7,6 +7,17 @@
     <link rel="stylesheet" href="styles/global.css" />
     <link rel="stylesheet" href="styles/layout.css" />
     <link rel="stylesheet" href="styles/pages/styles.css" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
+      crossorigin="anonymous"
+    />
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+      crossorigin="anonymous"
+    ></script>
   </head>
   <body>
     <div id="header-container"></div>
@@ -19,12 +30,19 @@
         </section>
         <section class="goals-section">
           <h2>Goals</h2>
-          <table class="goals-table">
+          <table class="goals-table table">
             <thead>
               <tr>
-                <th>Goal</th>
-                <th>Target Amount</th>
-                <th>Current Amount</th>
+                <th class="text-center">Goal</th>
+                <th class="d-table-cell d-lg-none text-center">
+                  Current/Target
+                </th>
+                <th class="d-none d-lg-table-cell text-center">
+                  Target Amount
+                </th>
+                <th class="d-none d-lg-table-cell text-center">
+                  Current Amount
+                </th>
               </tr>
             </thead>
             <tbody id="goalsTableBody">
@@ -37,13 +55,14 @@
       <div class="dashboard-seperator">
         <section class="recent-transactions-section">
           <h2>Recent Transactions</h2>
-          <table class="transactions-table">
-            <thead >
+          <table class="transactions-table table">
+            <thead>
               <tr id="transactionsTableHeadRow">
                 <th>Date</th>
                 <th>Type</th>
                 <th>Amount</th>
-                
+                <th class="d-none d-lg-table-cell text-center">Description</th>
+                <th class="d-none d-lg-table-cell text-center">Category</th>
               </tr>
             </thead>
             <tbody id="transactionsTableBody">

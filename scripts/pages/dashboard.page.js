@@ -137,53 +137,18 @@ function renderMediaTables(limit) {
     return;
   }
 
-  if (userWidth <= 400) {
-    recentTransactions.forEach((transaction) => {
-      const row = document.createElement("tr");
-      row.innerHTML = `
-             <td>${transaction.date}</td>
-             <td>${transaction.type}</td>
-             <td>$${fmt(transaction.amount)}</td>
-           `;
-      transactionsTableBody.appendChild(row);
-    });
-  } else if (userWidth >= 700 && userWidth < 1400) {
-    console.log("Rendering medium screen transactions");
-    const headRow = document.getElementById("transactionsTableHeadRow");
-    const th = document.createElement("th");
-    th.innerHTML = "Description";
-    headRow.appendChild(th);
-    recentTransactions.forEach((transaction) => {
-      const row = document.createElement("tr");
-      row.innerHTML = `
-           <td>${transaction.date}</td>
-           <td>${transaction.type}</td>
-           <td>$${fmt(transaction.amount)}</td>
-           <td>${transaction.description}</td>
-         `;
-      transactionsTableBody.appendChild(row);
-    });
-  } else if (userWidth >= 1400) {
-    console.log("Rendering large screen transactions");
-    const headRow = document.getElementById("transactionsTableHeadRow");
-    const thOne = document.createElement("th");
-    const thTwo = document.createElement("th");
-    thOne.innerHTML = "Description";
-    thTwo.innerHTML = "Category";
-    headRow.appendChild(thOne);
-    headRow.appendChild(thTwo);
     recentTransactions.forEach((transaction) => {
       const row = document.createElement("tr");
       row.innerHTML = `
        <td>${transaction.date}</td>
        <td>${transaction.type}</td>
        <td>$${fmt(transaction.amount)}</td>
-       <td>${transaction.description}</td>
-       <td>${transaction.category}</td>
+       <td class="d-none d-lg-table-cell text-center">${transaction.description}</td>
+       <td class="d-none d-lg-table-cell text-center">${transaction.category}</td>
      `;
       transactionsTableBody.appendChild(row);
     });
-  }
+  
 }
 
 function renderDashboard() {

@@ -86,14 +86,6 @@ export function renderResponsiveGoalsTable() {
   // Clear existing content
   container.innerHTML = "";
 
-  // Clear table headers first to prevent duplicates
-  const headRow = document.getElementById("goalsTableHeadRow");
-  if (headRow) {
-    // Keep only the first header (Goal Name)
-    while (headRow.children.length > 1) {
-      headRow.removeChild(headRow.lastChild);
-    }
-  }
 
   const currentGoals = getAllGoals();
 
@@ -104,102 +96,15 @@ export function renderResponsiveGoalsTable() {
     return;
   }
 
-  if (userWidth >= 320 && userWidth < 768) {
-    const headRow = document.getElementById("goalsTableHeadRow");
-    const totalTh = document.createElement("th");
-    totalTh.classList.add("target-current");
-    totalTh.innerHTML = "<span>Target</span>/<span>Current</span>";
-    headRow.appendChild(totalTh);
-    const actionTh = document.createElement("th");
-    actionTh.innerHTML = "Actions";
-    headRow.appendChild(actionTh);
-    currentGoals.forEach((goal) => {
-      let row = document.createElement("tr");
-      row.innerHTML = `
-      <td>${goal.name}</td>
-      <td class="target-current"><span>$${fmt(goal.currentAmount)}</span>/<span>$${fmt(goal.targetAmount)}</span></td>
-      <td>
-      <button class="action-btn changeFunds" data-name="${goal.name}">Add/Move Money</button>
-      <div>
-      <button class="action-btn edit" data-name="${goal.name}">Edit</button>
-      <button class="action-btn delete" data-name="${goal.name}">Delete</button>
-      </div>
-      </td>
-      `;
 
-      const changeFundsBtn = row.querySelector(".changeFunds");
-      const editBtn = row.querySelector(".edit");
-      const deleteBtn = row.querySelector(".delete");
-      changeFundsBtn.addEventListener("click", () =>
-        handleChangeFunds(goal.name),
-      );
-
-      editBtn.addEventListener("click", () => handleEditTransaction(goal.name));
-      deleteBtn.addEventListener("click", () =>
-        handleDeleteTransaction(goal.name),
-      );
-      container.appendChild(row);
-    });
-  } else if (userWidth >= 768 && userWidth < 1400) {
-    const headRow = document.getElementById("goalsTableHeadRow");
-    const targetTh = document.createElement("th");
-    targetTh.innerHTML = "Target Amount";
-    headRow.appendChild(targetTh);
-    const currentTh = document.createElement("th");
-    currentTh.innerHTML = "Current Amount";
-    headRow.appendChild(currentTh);
-    const actionTh = document.createElement("th");
-    actionTh.innerHTML = "Actions";
-    headRow.appendChild(actionTh);
-    currentGoals.forEach((goal) => {
-      let row = document.createElement("tr");
-      row.innerHTML = `
-      <td>${goal.name}</td>
-      <td>$${fmt(goal.targetAmount)}</td>
-      <td>$${fmt(goal.currentAmount)}</td>
-      <td>
-      <button class="action-btn changeFunds" data-name="${goal.name}">Add/Move Money</button>
-      <div>
-        <button class="action-btn edit" data-name="${goal.name}">Edit</button>
-        <button class="action-btn delete" data-name="${goal.name}">Delete</button>
-        </div>
-      </td>
-      `;
-
-      const changeFundsBtn = row.querySelector(".changeFunds");
-      const editBtn = row.querySelector(".edit");
-      const deleteBtn = row.querySelector(".delete");
-      changeFundsBtn.addEventListener("click", () =>
-        handleChangeFunds(goal.name),
-      );
-
-      editBtn.addEventListener("click", () => handleEditTransaction(goal.name));
-      deleteBtn.addEventListener("click", () =>
-        handleDeleteTransaction(goal.name),
-      );
-      container.appendChild(row);
-    });
-  } else if (userWidth >= 1400) {
-    const headRow = document.getElementById("goalsTableHeadRow");
-    const targetTh = document.createElement("th");
-    targetTh.innerHTML = "Target Amount";
-    headRow.appendChild(targetTh);
-    const currentTh = document.createElement("th");
-    currentTh.innerHTML = "Current Amount";
-    headRow.appendChild(currentTh);
-    const progressTh = document.createElement("th");
-    progressTh.innerHTML = "Progress";
-    headRow.appendChild(progressTh);
-    const actionTh = document.createElement("th");
-    actionTh.innerHTML = "Actions";
-    headRow.appendChild(actionTh);
     currentGoals.forEach((goal) => {
       let row = document.createElement("tr");
       row.innerHTML = `
     <td>${goal.name}</td>
-    <td>$${fmt(goal.targetAmount)}</td>
-    <td>$${fmt(goal.currentAmount)}</td>
-    <td>
+    <td class="d-table-cell d-lg-none">$${fmt(goal.targetAmount)}/$${fmt(goal.currentAmount)}</td>
+    <td class="d-none d-lg-table-cell">$${fmt(goal.targetAmount)}</td>
+    <td class="d-none d-lg-table-cell">$${fmt(goal.currentAmount)}</td>
+    <td class="d-none d-lg-table-cell">
         <progress class="progress-bar" value="${goal.currentAmount}" max="${goal.targetAmount}"></progress>
       </td>
     <td>
@@ -225,7 +130,7 @@ export function renderResponsiveGoalsTable() {
       container.appendChild(row);
     });
   }
-}
+
 export function renderSavingsCategories(select, goalsList) {
   if (!select) {
     console.error("Savings category select element not found");

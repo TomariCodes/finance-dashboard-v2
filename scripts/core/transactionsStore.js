@@ -311,108 +311,40 @@ export function renderResponsiveTransactions(
       transaction.category,
   );
 
-  const headRow = document.getElementById("transactionsTableHeadRow");
-
-  // Always reset headers based on current viewport width to prevent duplicates on re-render
-  if (userWidth >= 1400) {
-    headRow.innerHTML = `<th>Date</th><th>Type</th><th>Amount</th><th>Description</th><th>Category</th><th>Actions</th>`;
-  } else if (userWidth >= 700) {
-    headRow.innerHTML = `<th>Date</th><th>Type</th><th>Amount</th><th>Description</th><th>Actions</th>`;
-  } else {
-    headRow.innerHTML = `<th>Date</th><th>Type</th><th>Amount</th><th>Actions</th>`;
-  }
-
   if (validTransactions.length === 0) {
     const row = document.createElement("tr");
-    row.innerHTML = `<td colspan="${headRow.children.length}" style="text-align: center; padding: 20px;">No data to display</td>`;
+    row.innerHTML = `<td colspan="6" class="text-center p-3">No data to display</td>`;
     transactionsTableBody.appendChild(row);
     return;
   }
-
-  if (userWidth >= 1400) {
-    validTransactions.forEach((transaction) => {
-      const row = document.createElement("tr");
-      const typeDisplay = transaction.isRecurring
-        ? `${transaction.type} 🔄`
-        : transaction.type;
-      row.innerHTML = `
-       <td>${transaction.date}</td>
-       <td>${typeDisplay}</td>
-       <td>$${fmt(transaction.amount)}</td>
-       <td>${transaction.description}</td>
-       <td>${transaction.category}</td>
-       <td>
-        <button class="edit-btn" data-id="${transaction.id}">Edit</button>
-        <button class="delete-btn" data-id="${transaction.id}">Delete</button>
-      </td>
-      `;
-      const editBtn = row.querySelector(".edit-btn");
-      const deleteBtn = row.querySelector(".delete-btn");
-
-      editBtn.addEventListener("click", () =>
-        handleEditTransaction(transaction.id),
-      );
-      deleteBtn.addEventListener("click", () =>
-        handleDeleteTransaction(transaction.id),
-      );
-      transactionsTableBody.appendChild(row);
-    });
-  } else if (userWidth >= 700) {
-    validTransactions.forEach((transaction) => {
-      const row = document.createElement("tr");
-      const typeDisplay = transaction.isRecurring
-        ? `${transaction.type} 🔄`
-        : transaction.type;
-      row.innerHTML = `
+  validTransactions.forEach((transaction) => {
+    const row = document.createElement("tr");
+    const typeDisplay = transaction.isRecurring
+      ? `${transaction.type} 🔄`
+      : transaction.type;
+    row.innerHTML = `
       <td>${transaction.date}</td>
       <td>${typeDisplay}</td>
       <td>$${fmt(transaction.amount)}</td>
-      <td>${transaction.description}</td>
+      <td class="d-none d-lg-table-cell text-center">${transaction.description}</td>
+      <td class="d-none d-lg-table-cell text-center">${transaction.category}</td>
       <td>
       <button class="edit-btn" data-id="${transaction.id}">Edit</button>
       <button class="delete-btn" data-id="${transaction.id}">Delete</button>
       </td>
       `;
 
-      const editBtn = row.querySelector(".edit-btn");
-      const deleteBtn = row.querySelector(".delete-btn");
+    const editBtn = row.querySelector(".edit-btn");
+    const deleteBtn = row.querySelector(".delete-btn");
 
-      editBtn.addEventListener("click", () =>
-        handleEditTransaction(transaction.id),
-      );
-      deleteBtn.addEventListener("click", () =>
-        handleDeleteTransaction(transaction.id),
-      );
-      transactionsTableBody.appendChild(row);
-    });
-  } else {
-    validTransactions.forEach((transaction) => {
-      const row = document.createElement("tr");
-      const typeDisplay = transaction.isRecurring
-        ? `${transaction.type} 🔄`
-        : transaction.type;
-      row.innerHTML = `
-      <td>${transaction.date}</td>
-      <td>${typeDisplay}</td>
-      <td>$${fmt(transaction.amount)}</td>
-      <td>
-      <button class="edit-btn" data-id="${transaction.id}">Edit</button>
-      <button class="delete-btn" data-id="${transaction.id}">Delete</button>
-      </td>
-      `;
-
-      const editBtn = row.querySelector(".edit-btn");
-      const deleteBtn = row.querySelector(".delete-btn");
-
-      editBtn.addEventListener("click", () =>
-        handleEditTransaction(transaction.id),
-      );
-      deleteBtn.addEventListener("click", () =>
-        handleDeleteTransaction(transaction.id),
-      );
-      transactionsTableBody.appendChild(row);
-    });
-  }
+    editBtn.addEventListener("click", () =>
+      handleEditTransaction(transaction.id),
+    );
+    deleteBtn.addEventListener("click", () =>
+      handleDeleteTransaction(transaction.id),
+    );
+    transactionsTableBody.appendChild(row);
+  });
 }
 
 export function addTransaction(data) {

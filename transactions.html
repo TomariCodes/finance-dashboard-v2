@@ -7,6 +7,17 @@
     <link rel="stylesheet" href="styles/global.css" />
     <link rel="stylesheet" href="styles/layout.css" />
     <link rel="stylesheet" href="styles/pages/transactions.css" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
+      crossorigin="anonymous"
+    />
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+      crossorigin="anonymous"
+    ></script>
   </head>
   <body>
     <div id="header-container"></div>
@@ -50,16 +61,30 @@
             <button id="addTransactionBtn" class="btn">Add Transaction</button>
           </div>
         </div>
-        <table class="transactions-table">
+        <table class="transactions-table table">
           <thead>
             <tr id="transactionsTableHeadRow">
-              <th>Date</th>
-              <th>Type</th>
-              <th>Amount</th>
+             <th scope="col" class="text-center">Date</th>
+             <th scope="col" class="text-center">Type</th>
+             <th scope="col" class="text-center">Amount</th>
+             <th scope="col" class="d-none d-lg-table-cell text-center">Description</th>
+             <th scope="col" class="d-none d-lg-table-cell text-center">Category</th>
+             <th scope="col" class="text-center">Actions</th>
             </tr>
           </thead>
           <tbody id="transactionsTableBody">
-            <!-- Transactions will be dynamically inserted here -->
+          <!-- Transactions will be dynamically inserted here -->
+           <tr>
+            <td>10/19/25</td>
+      <td>Expense</td>
+      <td>$56.86</td>
+      <td class="d-none d-lg-table-cell">Sample Description</td>
+      <td class="d-none d-lg-table-cell">Sample Category</td>
+      <td>
+      <button class="edit-btn">Edit</button>
+      <button class="delete-btn">Delete</button>
+      </td>
+           </tr>
           </tbody>
         </table>
       </section>

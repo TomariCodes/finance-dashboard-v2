@@ -131,9 +131,9 @@ export function renderInvestmentTransactionsTable(
     const row = document.createElement("tr");
     row.innerHTML = `
       <td>${tx.date}</td>
-      <td>${tx.type}</td>
+      <td class="text-center d-none d-lg-table-cell">${tx.type}</td>
       <td>$${fmt(tx.amount)}</td>
-      <td>N/A</td>
+      <td class="text-center d-none d-lg-table-cell">N/A</td>
     `;
     tbody.appendChild(row);
 
@@ -170,11 +170,6 @@ export function renderResponsiveCompaniesList(table, companies, transactions) {
   const tbody = table.querySelector("tbody");
   tbody.innerHTML = ""; // Clear existing content
 
-  // Clear existing headers to avoid duplication
-  const headRow = document.getElementById("investmentsTableHeadRow");
-  if (headRow) {
-    headRow.innerHTML = "<th>Company</th>"; // Reset to base header
-  }
 
   if (!Array.isArray(companies) || companies.length === 0) {
     const emptyRow = document.createElement("tr");
@@ -183,104 +178,15 @@ export function renderResponsiveCompaniesList(table, companies, transactions) {
     return;
   }
 
-  if (userWidth <= 320) {
-    // Mobile view - minimal columns
-    if (headRow) {
-      const tickerTh = document.createElement("th");
-      tickerTh.innerHTML = "Ticker";
-      headRow.appendChild(tickerTh);
-      const actionTh = document.createElement("th");
-      actionTh.innerHTML = "Actions";
-      headRow.appendChild(actionTh);
-    }
 
-    companies.forEach((company) => {
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td>${company.name}</td>
-        <td>${company.ticker}</td>
-        <td>
-          <button class="editMoney-btn" data-edit-name="${company.name}">Add/Move Money</button>
-          <button class="delete-btn" data-delete-name="${company.name}">Delete</button>
-        </td>
-      `;
-
-      const changeFundsBtn = row.querySelector(".editMoney-btn");
-      const deleteBtn = row.querySelector(".delete-btn");
-
-      changeFundsBtn.addEventListener("click", () =>
-        handleChangeInvestmentFunds(company.name),
-      );
-
-      deleteBtn.addEventListener("click", () =>
-        handleDeleteCompany(company.name),
-      );
-
-      tbody.appendChild(row);
-    });
-  } else if (userWidth <= 768) {
-    // Tablet view - medium columns
-    if (headRow) {
-      const targetTh = document.createElement("th");
-      targetTh.innerHTML = "Total Invested";
-      headRow.appendChild(targetTh);
-      const tickerTh = document.createElement("th");
-      tickerTh.innerHTML = "Ticker";
-      headRow.appendChild(tickerTh);
-      const actionTh = document.createElement("th");
-      actionTh.innerHTML = "Actions";
-      headRow.appendChild(actionTh);
-    }
-
-    companies.forEach((company) => {
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td>${company.name}</td>
-        <td>$${fmt(renderCompanyAmount(company.name, transactions))}</td>
-        <td>${company.ticker}</td>
-        <td>
-          <button class="editMoney-btn" data-edit-name="${company.name}">Add/Move Money</button>
-          <button class="delete-btn" data-delete-name="${company.name}">Delete</button>
-        </td>
-      `;
-
-      const changeFundsBtn = row.querySelector(".editMoney-btn");
-      const deleteBtn = row.querySelector(".delete-btn");
-
-      changeFundsBtn.addEventListener("click", () =>
-        handleChangeInvestmentFunds(company.name),
-      );
-
-      deleteBtn.addEventListener("click", () =>
-        handleDeleteCompany(company.name),
-      );
-
-      tbody.appendChild(row);
-    });
-  } else {
-    // Desktop view - all columns
-    if (headRow) {
-      const targetTh = document.createElement("th");
-      targetTh.innerHTML = "Total Invested";
-      headRow.appendChild(targetTh);
-      const tickerTh = document.createElement("th");
-      tickerTh.innerHTML = "Ticker";
-      headRow.appendChild(tickerTh);
-      const dividendTh = document.createElement("th");
-      dividendTh.innerHTML = "Dividends";
-      headRow.appendChild(dividendTh);
-      const actionTh = document.createElement("th");
-      actionTh.innerHTML = "Actions";
-      headRow.appendChild(actionTh);
-    }
 
     companies.forEach(async (company) => {
       const row = document.createElement("tr");
       row.innerHTML = `
       <td>${company.name}</td>
       <td>$${fmt(renderCompanyAmount(company.name, transactions))}</td>
-      <td>${company.ticker}</td>
-        <td>${(await returnDividend(company.ticker)) === null ? "0.00 USD" : await returnDividend(company.ticker)}</td>
+      <td class="d-none d-lg-table-cell">${company.ticker}</td>
+        <td class="d-none d-lg-table-cell">${(await returnDividend(company.ticker)) === null ? "0.00 USD" : await returnDividend(company.ticker)}</td>
         <td>
           <button class="editMoney-btn" data-edit-name="${company.name}">Add/Move Money</button>
           <button class="delete-btn" data-delete-name="${company.name}">Delete</button>
@@ -301,7 +207,6 @@ export function renderResponsiveCompaniesList(table, companies, transactions) {
       tbody.appendChild(row);
     });
   }
-}
 
 export function renderCompaniesList(table, companies, transactions) {
   if (!table) {
