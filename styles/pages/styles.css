@@ -3,6 +3,9 @@
   flex-flow: row nowrap;
   padding: 20px;
   gap: 20px;
+  min-height: calc(89vh - 2rem);
+  background-color: var(--bg-light);
+  color: var(--text);
 }
 
 .dashboard-overview {
@@ -163,7 +166,6 @@
 
   .transactions-chart-section {
     padding: 10px;
-    
   }
 
   .transactions-table td,
@@ -179,7 +181,7 @@
   .dashboard-chart {
     max-height: 200px;
   }
-  
+
   .dashboard-seperator {
     width: 100%;
     padding: 10px;

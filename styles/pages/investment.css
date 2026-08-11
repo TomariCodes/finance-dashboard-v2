@@ -4,7 +4,8 @@
   height: auto;
   display: flex;
   align-items: flex-start;
-  /* justify-content: space-evenly; */
+  background-color: var(--bg-light);
+  color: var(--text);
   gap: 20px;
   padding: 20px;
 }

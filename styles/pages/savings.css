@@ -3,9 +3,11 @@
   justify-content: space-between;
   //align-items: center;
   padding: 20px;
-  min-height: calc(87vh - 2rem);
+  min-height: calc(89vh - 2rem);
   height: auto;
   gap: 20px;
+  background-color: var(--bg-light);
+  color: var(--text);
 }
 
 .section-divider {
@@ -218,7 +220,7 @@
   min-width: 40px;
 }
 
-/* .completed-goal-message styles moved to global.css */
+
 
 /* MEDIA QUERIES */
 
@@ -276,6 +278,7 @@
     padding: 0.5rem;
     padding-bottom: 70px; /* Extra bottom padding for mobile */
     gap: 2rem;
+    background-color: var(--bg-light);
   }
 
   .section-divider {
