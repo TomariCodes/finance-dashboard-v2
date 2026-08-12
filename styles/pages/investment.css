@@ -1,6 +1,6 @@
 .main {
   width: 100%;
-  min-height: 82.5vh;
+  min-height: calc(89vh - 2rem);
   height: auto;
   display: flex;
   align-items: flex-start;

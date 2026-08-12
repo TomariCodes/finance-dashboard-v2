@@ -102,13 +102,10 @@
   box-sizing: border-box;
 }
 
-.transactions-table thead {
-  background-color: var(--primary);
-  color: var(--text);
-}
-
 .transactions-table th {
   padding: 0.4rem;
+  background-color: var(--secondary);
+  color: var(--text);
 }
 
 .transactions-table tr {
@@ -124,6 +121,8 @@
 .transactions-table td {
   padding: 0.6rem;
   text-align: center;
+  color: var(--text);
+  background-color: var(--bg-light);
 }
 
 .edit-btn {

@@ -59,6 +59,7 @@
 .goals-table th,
 .goals-table td {
   background-color: var(--info);
+  color: var(--text);
   padding: 8px;
   text-align: center;
 }
@@ -105,6 +106,8 @@
 .transactions-table td {
   padding: 8px;
   text-align: center;
+  background-color: var(--info);
+  color: var(--text);
 }
 
 .transactions-table td {
