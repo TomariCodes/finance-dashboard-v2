@@ -15,7 +15,7 @@ reconcileGoalAmountsFromTransactions();
 
 renderSavingsSummary(getGoals());
 // Make functions available globally for goal updates
-window.renderSavingsSummary = () => renderSavingsSummary(getAllGoals());
+window.renderSavingsSummary = () => renderSavingsSummary(getGoals());
 
 const renderModal = createModal({
   titleId: "goalModalTitle",

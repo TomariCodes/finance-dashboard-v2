@@ -1,4 +1,10 @@
-import { loadDB, saveDB } from "../core/storage.js";
+import {
+  loadDB,
+  saveDB,
+  getCompletedGoals,
+  getCompanies,
+  getTransactions,
+} from "../core/storage.js";
 import { confirmAction } from "../ui/confirm.js";
 import {
   renderMessage,
@@ -8,16 +14,13 @@ import {
   getAllInvestmentCategories,
 } from "../core/settingsStore.js";
 import {
-  getAllTransactions,
   getAllTransactionsWithRecurring,
   deleteRecurringTemplate,
 } from "../core/transactionsStore.js";
 import {
-  getAllCompletedGoals,
   deleteCompletedGoal,
   resetAllGoalProgress,
 } from "../core/savingsGoalsStore.js";
-import { getAllCompanies } from "../core/investmentsStore.js";
 
 const fmt = (n) =>
   Number(n).toLocaleString("en-US", {
@@ -198,7 +201,7 @@ function handleRecurringTransactionsClick() {
 }
 
 function handleAllTransactionHistoryClick() {
-  const transactions = getAllTransactions();
+  const transactions = getTransactions();
   const list = document.getElementById("transactionsList");
   const section = document.getElementById("transactionsSettings");
 
@@ -291,7 +294,7 @@ function resetGoalsList() {
 
 function renderCompletedGoalsPage() {
   const list = document.getElementById("goalsList");
-  const goals = getAllCompletedGoals();
+  const goals = getCompletedGoals();
   renderPaged(goals, list, (goal) => {
     const li = document.createElement("li");
     li.classList.add("recurring-transaction-item");
@@ -330,7 +333,7 @@ function handleCompletedGoalsClick() {
 }
 
 function handleAllGoalsTransactionHistoryClick() {
-  const savingsTx = getAllTransactions().filter((t) => t.type === "Savings");
+  const savingsTx = getTransactions().filter((t) => t.type === "Savings");
   const list = document.getElementById("goalsList");
   const section = document.getElementById("goalsSettings");
 
@@ -428,7 +431,7 @@ function resetInvestmentsList() {
 }
 
 function handleInvestmentCompaniesClick() {
-  const companies = getAllCompanies();
+  const companies = getCompanies();
   const investmentsList = document.getElementById("investmentsList");
   const investmentSettingsSection =
     document.getElementById("investmentSettings");
@@ -457,9 +460,7 @@ function handleInvestmentCompaniesClick() {
 }
 
 function handleInvestmentsTransactionHistoryClick() {
-  const investmentTx = getAllTransactions().filter(
-    (t) => t.type === "Investment",
-  );
+  const investmentTx = getTransactions().filter((t) => t.type === "Investment");
   const list = document.getElementById("investmentsList");
   const section = document.getElementById("investmentSettings");
 

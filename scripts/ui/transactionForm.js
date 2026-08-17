@@ -219,7 +219,6 @@ function initializeTransactionForm(presetData = {}) {
           amount,
           category,
         };
-        const goals = getGoals();
         // Add savings direction if it's a savings transaction
         if (type === "Savings") {
           const savingsDirection =
@@ -228,9 +227,9 @@ function initializeTransactionForm(presetData = {}) {
           transactionData.toTotal = savingsDirection === "to" ? true : false;
 
           if (savingsDirection === "to") {
-            addToSavingsGoal(amount, category, goals);
+            addToSavingsGoal(amount, category, getGoals());
           } else if (savingsDirection === "from") {
-            removeFromSavingsGoal(amount, category, goals);
+            removeFromSavingsGoal(amount, category, getGoals());
           }
         }
 

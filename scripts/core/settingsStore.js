@@ -1,8 +1,7 @@
-import { getAllGoals } from "./savingsGoalsStore.js";
 import { getAllTransactionsWithRecurring } from "./transactionsStore.js";
-import { loadDB, saveDB } from "./storage.js";
+import { loadDB, saveDB, getGoals } from "./storage.js";
 
-let goals = getAllGoals();
+let goals = getGoals();
 
 // Get all recurring transactions from the main transaction store
 export function getAllRecurringTransactions() {
@@ -21,7 +20,7 @@ export function getAllTransactionCategories() {
 }
 
 export function getAllGoalsCategories() {
-  const goals = getAllGoals();
+  const goals = getGoals();
   const categoriesSet = new Set(goals.map((g) => g.name));
   console.log("Unique categories:", categoriesSet);
   return Array.from(categoriesSet);
