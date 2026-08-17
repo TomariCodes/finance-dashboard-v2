@@ -1,18 +1,19 @@
 import { createModal } from "../ui/modal.js";
 import { renderSavingsSummary } from "../calculators/savings.calc.js";
 import {
-  getAllGoals,
   renderSavingsChart,
   renderResponsiveGoalsTable,
   renderGoalsTable,
   checkAndCompleteGoals,
   reconcileGoalAmountsFromTransactions,
 } from "../core/savingsGoalsStore.js";
+import { getTransactions, getGoals, getCompanies, saveDB } from "../core/storage.js"
+
 
 // Fix any goal amounts that were never updated by recurring transaction backfill
 reconcileGoalAmountsFromTransactions();
 
-renderSavingsSummary(getAllGoals());
+renderSavingsSummary(getGoals());
 // Make functions available globally for goal updates
 window.renderSavingsSummary = () => renderSavingsSummary(getAllGoals());
 

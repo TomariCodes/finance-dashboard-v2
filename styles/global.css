@@ -1,18 +1,18 @@
 html.light {
-  --bg-dark: hsl(125 11% 89%);
-  --bg: hsl(125 22% 94%);
-  --bg-light: hsl(125 100% 100%);
-  --text: hsl(127 40% 4%);
-  --text-muted: hsl(126 7% 27%);
-  --highlight: hsl(125 100% 99%);
-  --border: hsl(126 4% 49%);
-  --border-muted: hsl(125 6% 61%);
-  --primary: hsl(135 59% 21%);
-  --secondary: hsl(301 34% 29%);
-  --danger: hsl(9 21% 41%);
-  --warning: hsl(52 23% 34%);
-  --success: hsl(147 19% 36%);
-  --info: hsl(217 22% 41%);
+  --bg-dark: hsl(0 0% 90%);
+--bg: hsl(300 0% 95%);
+--bg-light: hsl(300 50% 100%);
+--text: hsl(300 0% 4%);
+--text-muted: hsl(0 0% 28%);
+--highlight: hsl(300 50% 100%);
+--border: hsl(NaN 0% 50%);
+--border-muted: hsl(340 0% 62%);
+--primary: hsl(156 100% 15%);
+--secondary: hsl(314 37% 30%);
+--danger: hsl(9 21% 41%);
+--warning: hsl(52 23% 34%);
+--success: hsl(147 19% 36%);
+--info: hsl(217 22% 41%);
 }
 
 html.dark {
@@ -33,20 +33,20 @@ html.dark {
 }
 
 :root {
-  --bg-dark: hsl(125 11% 89%);
-  --bg: hsl(125 22% 94%);
-  --bg-light: hsl(125 100% 100%);
-  --text: hsl(127 40% 4%);
-  --text-muted: hsl(126 7% 27%);
-  --highlight: hsl(125 100% 99%);
-  --border: hsl(126 4% 49%);
-  --border-muted: hsl(125 6% 61%);
-  --primary: hsl(135 59% 21%);
-  --secondary: hsl(301 34% 29%);
-  --danger: hsl(9 21% 41%);
-  --warning: hsl(52 23% 34%);
-  --success: hsl(147 19% 36%);
-  --info: hsl(217 22% 41%);
+--bg-dark: hsl(0 0% 90%);
+--bg: hsl(300 0% 95%);
+--bg-light: hsl(300 50% 100%);
+--text: hsl(300 0% 4%);
+--text-muted: hsl(0 0% 28%);
+--highlight: hsl(300 50% 100%);
+--border: hsl(NaN 0% 50%);
+--border-muted: hsl(340 0% 62%);
+--primary: hsl(156 100% 15%);
+--secondary: hsl(314 37% 30%);
+--danger: hsl(9 21% 41%);
+--warning: hsl(52 23% 34%);
+--success: hsl(147 19% 36%);
+--info: hsl(217 22% 41%);
 }
 
 /* RESET */

@@ -42,3 +42,28 @@ export function saveDB() {
   localStorage.setItem("prosperonDB", JSON.stringify(_db));
   return { message: "Database saved successfully.", status: "success" };
 }
+
+export function getTransactions() {
+  if (!_db) initDb();
+  return _db.transactions;
+}
+
+export function getRecurringTransactions() {
+  if (!_db) initDb();
+  return _db.recurringTransactions;
+}
+
+export function getGoals() {
+  if (!_db) initDb();
+  return _db.goals;
+}
+
+export function getCompletedGoals() {
+  if (!_db) initDb();
+  return _db.completedGoals;
+}
+
+export function getCompanies() {
+  if (!_db) initDb();
+  return _db.companies;
+}

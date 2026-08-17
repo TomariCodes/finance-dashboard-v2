@@ -153,22 +153,23 @@
     width: 100%;
     object-fit: cover;
   }
+
   .main {
     flex-flow: column nowrap;
-    padding: 10px;
-    justify-content: center;
-    align-items: center;
+    padding: 20px;
   }
 
   .dashboard-overview {
     width: 100%;
     padding: 10px;
-    margin-bottom: 25px;
     order: 2;
+    margin-bottom: 0;
   }
 
   .transactions-chart-section {
     padding: 10px;
+    gap: 5px;
+    margin-bottom: 0;
   }
 
   .transactions-table td,
@@ -179,15 +180,17 @@
 
   .goals-section {
     padding: 10px;
+    margin-bottom: 60px;
   }
 
   .dashboard-chart {
     max-height: 200px;
   }
-
+  
   .dashboard-seperator {
     width: 100%;
     padding: 10px;
+    gap: 5px;
     margin: 0;
   }
 
@@ -200,6 +203,6 @@
     font-size: 1.2rem;
     padding: 10px;
     object-fit: contain;
-    margin-bottom: 25px;
+  
   }
 }

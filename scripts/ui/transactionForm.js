@@ -1,23 +1,21 @@
 /* VALIDATION */
 import {
-  getAllTransactions,
   addTransaction,
   addRecurringTransaction,
 } from "../core/transactionsStore.js";
 import {
   renderGoalsTable,
   renderSavingsCategories,
-  getAllGoals,
   changeGoalStatus,
 } from "../core/savingsGoalsStore.js";
 import {
   renderInvestmentCategories,
-  getAllCompanies,
 } from "../core/investmentsStore.js";
 import {
   addToSavingsGoal,
   removeFromSavingsGoal,
 } from "../calculators/cashBalance.js";
+import { getTransactions, getGoals, getCompanies, saveDB } from "../core/storage.js"
 
 export const getStatusColor = () => {
   return document.documentElement.classList.contains("dark")
@@ -175,7 +173,7 @@ function initializeTransactionForm(presetData = {}) {
           investmentCategoryStatus.innerHTML = "";
         }
       }
-
+      
       if (!investmentDirection || !investmentDirection.value) {
         if (investmentDirectionStatus) {
           investmentDirectionStatus.innerHTML = `<svg class="statusIcon" xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="100" height="100" viewBox="0,0,256,256"> 
@@ -189,12 +187,13 @@ function initializeTransactionForm(presetData = {}) {
         }
       }
     }
-
+    
     // Return early if there are validation errors (keep modal open)
     if (hasErrors) {
-      console.log("[transactionForm] Validation failed — not submitting");
       return;
     }
+
+
 
     console.log(
       "[transactionForm] Validation passed. type:",
@@ -220,7 +219,7 @@ function initializeTransactionForm(presetData = {}) {
           amount,
           category,
         };
-
+        const goals = getGoals();
         // Add savings direction if it's a savings transaction
         if (type === "Savings") {
           const savingsDirection =
@@ -229,9 +228,9 @@ function initializeTransactionForm(presetData = {}) {
           transactionData.toTotal = savingsDirection === "to" ? true : false;
 
           if (savingsDirection === "to") {
-            addToSavingsGoal(amount, category, getAllGoals());
+            addToSavingsGoal(amount, category, goals);
           } else if (savingsDirection === "from") {
-            removeFromSavingsGoal(amount, category, getAllGoals());
+            removeFromSavingsGoal(amount, category, goals);
           }
         }
 
@@ -244,10 +243,10 @@ function initializeTransactionForm(presetData = {}) {
             "#investmentDirection",
           ).value;
           if (investmentCategoryEl && investmentCategoryEl.value) {
-            const co = getAllCompanies().find(
+            const company = getCompanies().find(
               (c) => c.id == investmentCategoryEl.value,
             );
-            if (co) transactionData.category = co.name;
+            if (company) transactionData.category = company.name;
           }
           transactionData.investmentDirection = investmentDirection;
         }
@@ -295,24 +294,21 @@ function initializeTransactionForm(presetData = {}) {
             "#investmentDirection",
           ).value;
           if (investmentCategoryEl && investmentCategoryEl.value) {
-            const co = getAllCompanies().find(
-              (c) => c.id == investmentCategoryEl.value,
+            const company = getCompanies().find(
+              (correctCompany) =>
+                correctCompany.id == investmentCategoryEl.value,
             );
-            if (co) transactionData.category = co.name;
+            if (company) transactionData.category = company.name;
           }
           transactionData.investmentDirection = investmentDirection;
         }
 
         // Check if this is a recurring transaction
         if (recurrence && recurrence !== "") {
-          console.log(
-            "Creating recurring transaction with interval:",
-            recurrence,
-          );
           addRecurringTransaction(transactionData, recurrence);
 
           if (type === "Savings" && transactionData.toTotal !== false) {
-            const goal = getAllGoals().find(
+            const goal = getGoals().find(
               (g) => g.name === transactionData.category,
             );
             if (goal) changeGoalStatus(goal);
@@ -325,8 +321,8 @@ function initializeTransactionForm(presetData = {}) {
             const savingsDirection =
               transactionData.toTotal !== false ? "to" : "from";
             if (savingsDirection === "to") {
-              addToSavingsGoal(amount, transactionData.category, getAllGoals());
-              const goal = getAllGoals().find(
+              addToSavingsGoal(amount, transactionData.category, getGoals());
+              const goal = getGoals().find(
                 (g) => g.name === transactionData.category,
               );
               if (goal) changeGoalStatus(goal);
@@ -334,14 +330,14 @@ function initializeTransactionForm(presetData = {}) {
               removeFromSavingsGoal(
                 amount,
                 transactionData.category,
-                getAllGoals(),
+                getGoals(),
               );
             }
             if (window.renderSavingsSummary) window.renderSavingsSummary();
           }
         }
 
-        if (type === "Savings") renderGoalsTable(getAllGoals());
+        if (type === "Savings") renderGoalsTable(getGoals);
         if (window.refreshTransactions) window.refreshTransactions();
         if (window.updateCharts) window.updateCharts();
         if (type === "Investment" && window.refreshInvestments)
@@ -466,7 +462,7 @@ function initializeTransactionForm(presetData = {}) {
         <option value="from">Investment → Total</option>
             `;
 
-      renderInvestmentCategories(inputFirst, getAllCompanies());
+      renderInvestmentCategories(inputFirst, getCompanies());
       firstLabelDiv.appendChild(labelFirst);
       firstLabelDiv.appendChild(inputFirst);
       firstLabelDiv.appendChild(investmentCategoryStatus);
@@ -511,7 +507,7 @@ function initializeTransactionForm(presetData = {}) {
         <option value="from">Savings → Total</option>
             `;
 
-      renderSavingsCategories(inputFirst, getAllGoals());
+      renderSavingsCategories(inputFirst, getGoals());
       firstLabelDiv.appendChild(labelFirst);
       firstLabelDiv.appendChild(inputFirst);
       firstLabelDiv.appendChild(savingsCategoryStatus);
@@ -589,9 +585,9 @@ function initializeTransactionForm(presetData = {}) {
           );
 
           // Find the company ID for the company name
-          const companies = getAllCompanies();
-          const company = companies.find(
-            (c) => c.name === presetData.investmentCompanyName,
+          const company = getCompanies().find(
+            (foundCompany) =>
+              foundCompany.name === presetData.investmentCompanyName,
           );
           if (company) {
             investmentCategory.value = company.id;

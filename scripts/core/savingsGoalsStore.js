@@ -4,7 +4,7 @@ import {
 } from "./transactionsStore.js";
 import { getTotalByType } from "../calculators/transactions.calc.js";
 import { createChartUI } from "../ui/chart.ui.js";
-import { saveDB, loadDB } from "./storage.js";
+import { saveDB, loadDB, getGoals,  getCompletedGoals } from "./storage.js";
 import { confirmAction } from "../ui/confirm.js";
 
 const fmt = (n) =>
@@ -13,12 +13,9 @@ const fmt = (n) =>
     maximumFractionDigits: 2,
   });
 
-let goals = null;
+let goals = getGoals();
 
-export function getAllGoals() {
-  if (Array.isArray(goals) && goals.length > 0) {
-    return goals;
-  }
+
 
   const database = loadDB();
   const data = database?.db || {};
@@ -28,12 +25,9 @@ export function getAllGoals() {
     goals = [...loadedGoals];
   }
 
-  console.log(goals);
-  return goals;
-}
 
 export function resetAllGoalProgress() {
-  const updatedGoals = getAllGoals().map((goal) => ({
+  const updatedGoals = getGoals().map((goal) => ({
     ...goal,
     currentAmount: 0,
     isCompleted: false,
@@ -73,6 +67,37 @@ export function renderSavingsChart() {
   );
 }
 
+export function renderDashboardGoals(limit) {
+  const goalsTableBody = document.getElementById("goalsTableBody");
+
+  if (!goalsTableBody) {
+    console.error("Cannot find goalsTableBody element");
+    return;
+  }
+
+  goalsTableBody.innerHTML = "";
+
+  const recentGoals = goals
+    .sort((a, b) => new Date(b.createdDate) - new Date(a.createdDate))
+    .slice(0, limit);
+
+  if (recentGoals.length === 0) {
+    const row = document.createElement("tr");
+    row.innerHTML = `<td colspan="3" class="text-center p-3">No data to display</td>`;
+    goalsTableBody.appendChild(row);
+    return;
+  }
+  recentGoals.forEach((goal) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+            <td>${goal.name}</td>
+            <td>$${fmt(goal.targetAmount)}</td>
+            <td>$${fmt(goal.currentAmount)}</td>
+        `;
+    goalsTableBody.appendChild(row);
+  });
+}
+
 export function renderResponsiveGoalsTable() {
   const userWidth = window.innerWidth;
   let container = document.getElementById("goals-table-body");
@@ -87,9 +112,9 @@ export function renderResponsiveGoalsTable() {
   container.innerHTML = "";
 
 
-  const currentGoals = getAllGoals();
+ 
 
-  if (currentGoals.length === 0) {
+  if (goals.length === 0) {
     let row = document.createElement("tr");
     row.innerHTML = `<td colspan="5" style="text-align: center; padding: 20px;">No data to display</td>`;
     container.appendChild(row);
@@ -97,8 +122,9 @@ export function renderResponsiveGoalsTable() {
   }
 
 
-    currentGoals.forEach((goal) => {
+    goals.forEach((goal) => {
       let row = document.createElement("tr");
+      console.log(goal.currentAmount)
       row.innerHTML = `
     <td>${goal.name}</td>
     <td class="d-table-cell d-lg-none">$${fmt(goal.targetAmount)}/$${fmt(goal.currentAmount)}</td>
@@ -135,7 +161,7 @@ export function renderSavingsCategories(select, goalsList) {
   if (!select) {
     console.error("Savings category select element not found");
   }
-  const currentGoals = goalsList || getAllGoals();
+  const currentGoals = goalsList || getGoals();
   select.innerHTML = "<option value=''>Select Goal</option>";
   currentGoals.forEach((goal) => {
     let option = document.createElement("option");
@@ -146,7 +172,7 @@ export function renderSavingsCategories(select, goalsList) {
 }
 
 export function addGoal(goalData) {
-  const currentGoals = getAllGoals();
+  const currentGoals = getGoals();
   const newGoal = {
     id:
       currentGoals.length > 0
@@ -186,7 +212,7 @@ export function updateGoal(idOrName, updatedData) {
     updatedData,
   );
 
-  const currentGoals = getAllGoals();
+  const currentGoals = getGoals();
   console.log("Current goals before update:", currentGoals);
 
   // Try to find by ID first (if idOrName is a number), then by name
@@ -261,7 +287,7 @@ export function renderGoalsTable() {
       "<th>Goal Name</th><th>Target Amount</th><th>Current Amount</th><th>Progress</th><th>Actions</th>";
   }
 
-  const currentGoals = getAllGoals();
+  const currentGoals = getGoals();
   if (currentGoals.length === 0) {
     const row = document.createElement("tr");
     row.innerHTML = `<td colspan="5" style="text-align: center; padding: 20px;">No data to display</td>`;
@@ -307,7 +333,7 @@ export function handleChangeFunds(goalName) {
   console.log(`Change funds for goal: ${goalName}`);
 
   // Find the goal to get its ID
-  const goal = getAllGoals().find((g) => g.name === goalName);
+  const goal = getGoals().find((g) => g.name === goalName);
   if (!goal) {
     console.error("Goal not found:", goalName);
     return;
@@ -339,7 +365,7 @@ export function handleChangeFunds(goalName) {
 }
 
 export function deleteGoal(idOrName) {
-  const currentGoals = getAllGoals();
+  const currentGoals = getGoals();
   let goalIndex = -1;
   if (typeof idOrName === "number" || !isNaN(idOrName)) {
     goalIndex = currentGoals.findIndex((g) => g.id == idOrName);
@@ -382,7 +408,7 @@ export function editGoal(goalName) {
 
   // Force fresh load from localStorage to avoid cache issues
   goals = null;
-  const allGoals = getAllGoals();
+  const allGoals = getGoals();
   console.log("All goals after fresh load:", allGoals);
   console.log("Looking for goal with name:", goalName);
 
@@ -428,7 +454,7 @@ export function handleEditTransaction(goalName) {
 }
 
 async function handleDeleteTransaction(goalName) {
-  const goal = getAllGoals().find((g) => g.name === goalName);
+  const goal = getGoals().find((g) => g.name === goalName);
   if (!goal) return;
   if (await confirmAction()) {
     deleteGoal(goal.id);
@@ -555,7 +581,7 @@ export function reconcileGoalAmountsFromTransactions() {
 }
 
 export function checkAndCompleteGoals() {
-  const currentGoals = [...getAllGoals()];
+  const currentGoals = [...getGoals()];
   currentGoals.forEach((goal) => {
     if (
       parseFloat(goal.targetAmount) > 0 &&
@@ -567,7 +593,7 @@ export function checkAndCompleteGoals() {
 }
 
 export function getAllCompletedGoals() {
-  return loadDB().db.completedGoals || [];
+  return getCompletedGoals() || [];
 }
 
 export function deleteCompletedGoal(goalId) {

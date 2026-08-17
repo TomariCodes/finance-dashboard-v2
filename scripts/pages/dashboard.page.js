@@ -1,9 +1,9 @@
-import { getAllTransactions } from "../core/transactionsStore.js";
-import { getAllGoals } from "../core/savingsGoalsStore.js";
+
 import { createChartUI, updateChartUI } from "../ui/chart.ui.js";
 import { calculateCashBalance } from "../calculators/cashBalance.js";
 import { getTotalByType } from "../calculators/transactions.calc.js";
-import { loadDB } from "../core/storage.js";
+import { getCompletedGoals, getGoals, getTransactions } from "../core/storage.js";
+import { renderDashboardGoals } from "../core/savingsGoalsStore.js";
 
 const fmt = (n) =>
   Number(n).toLocaleString("en-US", {
@@ -11,15 +11,19 @@ const fmt = (n) =>
     maximumFractionDigits: 2,
   });
 
-let transactions = getAllTransactions();
+let transactions = getTransactions();
 const chart = document.getElementById("dashboardChart");
 
 const renderDashboardChart = () => {
   const completedGoalNames = new Set(
-    (loadDB().db.completedGoals || []).map((g) => g.name),
+    (getCompletedGoals() || []).map((g) => g.name),
   );
   const activeTransactions = transactions.filter(
-    (t) => !(t.type === "Savings" && completedGoalNames.has(t.category)),
+    (transaction) =>
+      !(
+        transaction.type === "Savings" &&
+        completedGoalNames.has(transaction.category)
+      ),
   );
 
   const monthlyTransactions = activeTransactions.filter((transaction) => {
@@ -32,9 +36,6 @@ const renderDashboardChart = () => {
   });
 
   if (monthlyTransactions.length === 0) {
-    console.log(
-      "No transactions found for the current month - rendering empty chart",
-    );
     createChartUI(chart, ["No data"], [1]);
     return;
   }
@@ -54,42 +55,11 @@ const renderDashboardChart = () => {
 renderDashboardChart();
 renderDashboard();
 
-function renderDashboardGoals(limit) {
-  const goalsTableBody = document.getElementById("goalsTableBody");
 
-  if (!goalsTableBody) {
-    console.error("Cannot find goalsTableBody element");
-    return;
-  }
-
-  goalsTableBody.innerHTML = "";
-
-  const goals = getAllGoals();
-  const recentGoals = goals
-    .sort((a, b) => new Date(b.createdDate) - new Date(a.createdDate))
-    .slice(0, limit);
-
-  if (recentGoals.length === 0) {
-    const row = document.createElement("tr");
-    row.innerHTML = `<td colspan="3" style="text-align: center; padding: 20px;">No data to display</td>`;
-    goalsTableBody.appendChild(row);
-    return;
-  }
-  recentGoals.forEach((goal) => {
-    const row = document.createElement("tr");
-    row.innerHTML = `
-            <td>${goal.name}</td>
-            <td>$${fmt(goal.targetAmount)}</td>
-            <td>$${fmt(goal.currentAmount)}</td>
-        `;
-    goalsTableBody.appendChild(row);
-  });
-}
 
 function renderCashBalance() {
   const cashBalanceElement = document.getElementById("totalAmount");
   if (!cashBalanceElement) {
-    console.error("Cannot find totalAmount element");
     return;
   }
   const cashBalance = calculateCashBalance(transactions);
@@ -100,7 +70,7 @@ function renderCashBalance() {
   }
 }
 
-function renderMediaTables(limit) {
+function renderLimitedTables(limit) {
   const userWidth = window.innerWidth;
   console.log(userWidth);
   const transactionsTableBody = document.getElementById(
@@ -152,7 +122,7 @@ function renderMediaTables(limit) {
 }
 
 function renderDashboard() {
-  renderMediaTables(10); // Show only the 10 most recent transactions
+  renderLimitedTables(10); // Show only the 10 most recent transactions
   renderDashboardGoals(3); // Show only the 3 most recent goals
   renderCashBalance();
 }

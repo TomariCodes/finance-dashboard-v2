@@ -1,5 +1,5 @@
-import { getAllGoals, updateGoal } from "../core/savingsGoalsStore.js";
-import { getAllTransactions } from "../core/transactionsStore.js";
+import { updateGoal } from "../core/savingsGoalsStore.js";
+import { getTransactions } from '../core/storage.js'
 
 export function calculateCashBalance(transactions) {
   if (transactions) {
@@ -26,12 +26,10 @@ export function calculateCashBalance(transactions) {
   }
 }
 
-export function getCurrentCashBalance() {
-  const transactions = getAllTransactions();
+export function getCurrentCashBalance(transactions) {
   return Number(calculateCashBalance(transactions));
 }
 
-export default calculateCashBalance;
 
 export function addToSavingsGoal(amount, savingsName, goals) {
   if (savingsName) {
@@ -52,3 +50,5 @@ export function removeFromSavingsGoal(amount, savingsName, goals) {
     }
   }
 }
+
+    export default calculateCashBalance;
