@@ -64,7 +64,7 @@ window.updateTransaction = (id, data) => {
   const success = storage.updateTransaction(id, data);
   if (success) {
     transactions = storage.getAllTransactions(); // Refresh local data
-    storage.renderResponsiveTransactions(); // Re-render the table
+    storage.renderTransactions(); // Re-render the table
     updateCharts(); // Update charts after editing
   }
   return success;
@@ -73,7 +73,7 @@ window.updateTransaction = (id, data) => {
 // Make refreshTransactions available globally for the form
 window.refreshTransactions = () => {
   transactions = storage.getAllTransactions(); // Refresh local data
-  storage.renderResponsiveTransactions(); // Re-render the table
+  storage.renderTransactions(); // Re-render the table
   updateCharts(); // Update charts after refresh
 };
 
@@ -119,7 +119,7 @@ window.updateCharts = updateCharts;
 document.addEventListener("componentsLoaded", () => {
   if (!transactionsRendered) {
     console.log("Components loaded, rendering transactions...");
-    storage.renderResponsiveTransactions();
+    storage.renderTransactions();
     transactionsRendered = true;
   }
 });
@@ -132,7 +132,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const tbody = document.getElementById("transactionsTableBody");
       if (tbody && tbody.children.length === 0) {
         console.log("Fallback: rendering transactions after DOMContentLoaded");
-        storage.renderResponsiveTransactions();
+        storage.renderTransactions();
         transactionsRendered = true;
       }
     }
@@ -141,7 +141,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 document.addEventListener("transactionsFiltered", (e) => {
   const filteredTransactions = e.detail.transactions;
-  storage.renderResponsiveTransactions(filteredTransactions);
+  storage.renderTransactions(filteredTransactions);
   updateCharts(filteredTransactions);
 });
 
@@ -171,7 +171,7 @@ document.getElementById("filter").addEventListener("change", (e) => {
     default:
       sortedTransactions = [...transactions];
   }
-  storage.renderResponsiveTransactions(sortedTransactions);
+  storage.renderTransactions(sortedTransactions);
 });
 
 document.getElementById("filterChart").addEventListener("change", (e) => {

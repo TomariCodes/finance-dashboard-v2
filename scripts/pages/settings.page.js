@@ -4,11 +4,11 @@ import {
   getCompletedGoals,
   getCompanies,
   getTransactions,
+  getRecurringTransactions,
 } from "../core/storage.js";
 import { confirmAction } from "../ui/confirm.js";
 import {
   renderMessage,
-  getAllRecurringTransactions,
   getAllTransactionCategories,
   getAllGoalsCategories,
   getAllInvestmentCategories,
@@ -161,7 +161,7 @@ function resetTransactionsList() {
 
 // Event handler functions
 function renderRecurringTransactionsList() {
-  const recurringTransactions = getAllRecurringTransactions();
+  const recurringTransactions = getRecurringTransactions();
   const list = document.getElementById("transactionsList");
 
   renderPaged(recurringTransactions, list, (transaction) => {

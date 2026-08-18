@@ -1,18 +1,10 @@
-import { getAllTransactionsWithRecurring } from "./transactionsStore.js";
-import { loadDB, saveDB, getGoals } from "./storage.js";
 
+import { loadDB, saveDB, getGoals, getTransactions, getRecurringTransactions } from "./storage.js";
 let goals = getGoals();
 
-// Get all recurring transactions from the main transaction store
-export function getAllRecurringTransactions() {
-  const allTransactions = getAllTransactionsWithRecurring();
-  return allTransactions.filter(
-    (transaction) => transaction.isRecurring && transaction.recurrenceInterval,
-  );
-}
 
 export function getAllTransactionCategories() {
-  const allTransactions = getAllTransactionsWithRecurring();
+  const allTransactions = getTransactions();
   console.log("All transactions for category extraction:", allTransactions);
   const categoriesSet = new Set(allTransactions.map((t) => t.category));
   console.log("Unique categories:", categoriesSet);
@@ -27,7 +19,8 @@ export function getAllGoalsCategories() {
 }
 
 export function getAllInvestmentCategories() {
-  const allTransactions = getAllTransactionsWithRecurring();
+  const allTransactions = getTransactions();
+  console.log("All transactions for investment category extraction:", allTransactions);
   console.log("All transactions for category extraction:", allTransactions);
   let investmentTransactions = allTransactions.filter(
     (t) => t.type === "investment",

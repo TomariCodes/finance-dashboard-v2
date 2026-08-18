@@ -49,8 +49,10 @@ export function getTransactions() {
 }
 
 export function getRecurringTransactions() {
-  if (!_db) initDb();
-  return _db.recurringTransactions;
+  const allTransactions = getTransactions();
+  return allTransactions.filter(
+    (transaction) => transaction.isRecurring && transaction.recurrenceInterval,
+  );
 }
 
 export function getGoals() {

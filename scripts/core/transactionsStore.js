@@ -287,13 +287,13 @@ export async function handleDeleteTransaction(id) {
   }
 
   deleteTransaction(id);
-  renderResponsiveTransactions();
+  renderTransactions();
   if (window.updateCharts) window.updateCharts();
   if (window.renderSavingsSummary) window.renderSavingsSummary();
   if (window.renderGoalsTable) window.renderGoalsTable();
 }
 
-export function renderResponsiveTransactions(
+export function renderTransactions(
   transactionsToRender = transactions,
 ) {
   const transactionsTableBody = document.getElementById(
@@ -396,18 +396,12 @@ export function addTransaction(data) {
 
   loadDB().db.transactions.push(newTransaction);
   saveDB();
-  transactions = getTransactions();
   return newTransaction;
 }
 
 export function addRecurringTransaction(data, recurrenceInterval) {
   const today = new Date().toISOString().split("T")[0];
   const startDate = data.date;
-
-  console.log(`Creating recurring transaction: ${data.description}`);
-  console.log(
-    `Start date: ${startDate}, Today: ${today}, Recurrence: ${recurrenceInterval}`,
-  );
 
   // Create the template recurring transaction
   const templateTransaction = {
