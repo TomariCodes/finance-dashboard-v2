@@ -1,9 +1,5 @@
 import { loadDB } from "../core/storage.js";
 
-// Compute total saved as the sum of currentAmount across all active goals.
-// This stays correct regardless of how transactions are added/removed because
-// goal.currentAmount is kept in sync whenever transactions are created or
-// deleted.
 const getSavingsTotal = () => {
   const goals = loadDB().db.goals || [];
   return goals.reduce((sum, g) => sum + parseFloat(g.currentAmount || 0), 0);

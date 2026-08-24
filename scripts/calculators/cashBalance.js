@@ -1,5 +1,4 @@
 import { updateGoal } from "../core/savingsGoalsStore.js";
-import { getTransactions } from '../core/storage.js'
 
 export function calculateCashBalance(transactions) {
   if (transactions) {

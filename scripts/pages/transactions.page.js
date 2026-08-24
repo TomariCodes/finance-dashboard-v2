@@ -3,8 +3,16 @@ import { createModal } from "../ui/modal.js";
 import * as storage from "../core/transactionsStore.js";
 import {
   getTotalByType,
-  filterByDateRange,
 } from "../calculators/transactions.calc.js";
+import {
+  filterByDateRange,
+  getTransactionsByDateAsc,
+  getTransactionsByDateDesc,
+  getTransactionsByAmountAsc,
+  getTransactionsByAmountDesc,
+  getTransactionsByTypeAsc,
+  getTransactionsByTypeDesc,
+} from "../calculators/filters.calc.js";
 
 const NO_DATA_LABEL = "No data";
 const NO_DATA_VALUES = [1];
@@ -151,22 +159,22 @@ document.getElementById("filter").addEventListener("change", (e) => {
   let sortedTransactions = [...transactions];
   switch (filterValue) {
     case "dateAsc":
-      sortedTransactions = storage.getTransactionsByDateAsc();
+      sortedTransactions = getTransactionsByDateAsc();
       break;
     case "dateDesc":
-      sortedTransactions = storage.getTransactionsByDateDesc();
+      sortedTransactions = getTransactionsByDateDesc();
       break;
     case "amountAsc":
-      sortedTransactions = storage.getTransactionsByAmountAsc();
+      sortedTransactions = getTransactionsByAmountAsc();
       break;
     case "amountDesc":
-      sortedTransactions = storage.getTransactionsByAmountDesc();
+      sortedTransactions = getTransactionsByAmountDesc();
       break;
     case "typeAsc":
-      sortedTransactions = storage.getTransactionsByTypeAsc();
+      sortedTransactions = getTransactionsByTypeAsc();
       break;
     case "typeDesc":
-      sortedTransactions = storage.getTransactionsByTypeDesc();
+      sortedTransactions = getTransactionsByTypeDesc();
       break;
     default:
       sortedTransactions = [...transactions];

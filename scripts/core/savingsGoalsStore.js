@@ -1,10 +1,9 @@
 import {
-  getAllTransactionsWithRecurring,
   deleteRecurringTemplate,
-} from "./transactionsStore.js";
+} from "./recurring.js";
 import { getTotalByType } from "../calculators/transactions.calc.js";
 import { createChartUI } from "../ui/chart.ui.js";
-import { saveDB, loadDB, getGoals,  getCompletedGoals } from "./storage.js";
+import { saveDB, loadDB, getGoals,  getCompletedGoals, getTransactions } from "./storage.js";
 import { confirmAction } from "../ui/confirm.js";
 
 const fmt = (n) =>
@@ -45,7 +44,7 @@ export function renderSavingsChart() {
   // Only include savings transactions for currently active goals so the chart
   // excludes money that has already been moved out (completed/deleted goals).
   const activeGoalNames = new Set((loadDB().db.goals || []).map((g) => g.name));
-  const transactions = getAllTransactionsWithRecurring().filter(
+  const transactions = getTransactions().filter(
     (t) =>
       t.isTemplate !== true &&
       (t.type !== "Savings" || activeGoalNames.has(t.category)),

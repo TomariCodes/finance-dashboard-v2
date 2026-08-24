@@ -1,6 +1,5 @@
 
-import { loadDB, saveDB, getGoals, getTransactions, getRecurringTransactions } from "./storage.js";
-let goals = getGoals();
+import { loadDB, saveDB, getGoals, getTransactions } from "./storage.js";
 
 
 export function getAllTransactionCategories() {
@@ -12,8 +11,8 @@ export function getAllTransactionCategories() {
 }
 
 export function getAllGoalsCategories() {
-  const goals = getGoals();
-  const categoriesSet = new Set(goals.map((g) => g.name));
+  const allGoals = getGoals();
+  const categoriesSet = new Set(allGoals.map((g) => g.name));
   console.log("Unique categories:", categoriesSet);
   return Array.from(categoriesSet);
 }
@@ -38,7 +37,7 @@ export function getAllCompletedGoals() {
   return loadDB().db.completedGoals || [];
 }
 
-export function addRecurringTransaction(transaction) {
+export function addRecurringTransactionToDB(transaction) {
   const db = loadDB().db;
   if (!Array.isArray(db.recurringTransactions)) db.recurringTransactions = [];
   db.recurringTransactions.push(transaction);

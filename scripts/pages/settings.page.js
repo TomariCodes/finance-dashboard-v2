@@ -14,9 +14,8 @@ import {
   getAllInvestmentCategories,
 } from "../core/settingsStore.js";
 import {
-  getAllTransactionsWithRecurring,
   deleteRecurringTemplate,
-} from "../core/transactionsStore.js";
+} from "../core/recurring.js";
 import {
   deleteCompletedGoal,
   resetAllGoalProgress,

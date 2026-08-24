@@ -1,7 +1,6 @@
-import { getAllTransactionsWithRecurring } from "./transactionsStore.js";
-import { createChartUI, updateChartUI } from "../ui/chart.ui.js";
+import { createChartUI } from "../ui/chart.ui.js";
 import { getTotalByType } from "../calculators/transactions.calc.js";
-import { saveDB, loadDB } from "./storage.js";
+import { saveDB, loadDB, getTransactions } from "./storage.js";
 import { confirmAction } from "../ui/confirm.js";
 
 const fmt = (n) =>
@@ -10,7 +9,7 @@ const fmt = (n) =>
     maximumFractionDigits: 2,
   });
 
-let transactions = getAllTransactionsWithRecurring();
+let transactions = getTransactions();
 
 let companies = [];
 
@@ -55,7 +54,7 @@ export function updateCompany(originalName, updatedData) {
     renderCompaniesList(
       companiesTable,
       companies,
-      getAllTransactionsWithRecurring(),
+      getTransactions(),
     );
   }
 
@@ -79,7 +78,7 @@ export function addCompany(companyData) {
     renderCompaniesList(
       companiesTable,
       companies,
-      getAllTransactionsWithRecurring(),
+      getTransactions(),
     );
   }
 
@@ -255,7 +254,7 @@ export function renderCompaniesList(table, companies, transactions) {
 
 export function renderInvestmentsChart() {
   const canvas = document.getElementById("investmentsChart");
-  const currentTransactions = getAllTransactionsWithRecurring();
+  const currentTransactions = getTransactions();
 
   if (currentTransactions.length === 0) {
     console.log("No transactions found - rendering empty chart");
@@ -399,7 +398,7 @@ export async function handleDeleteCompany(companyName) {
     renderCompaniesList(
       companiesTable,
       companies,
-      getAllTransactionsWithRecurring(),
+      getTransactions,
     );
   }
 }

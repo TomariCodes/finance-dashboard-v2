@@ -1,8 +1,8 @@
 /* VALIDATION */
 import {
-  addTransaction,
-  addRecurringTransaction,
+  addTransaction
 } from "../core/transactionsStore.js";
+import { addRecurringTransaction} from "../core/recurring.js";
 import {
   renderGoalsTable,
   renderSavingsCategories,
@@ -15,7 +15,7 @@ import {
   addToSavingsGoal,
   removeFromSavingsGoal,
 } from "../calculators/cashBalance.js";
-import { getTransactions, getGoals, getCompanies, saveDB } from "../core/storage.js"
+import { getGoals, getCompanies } from "../core/storage.js"
 
 export const getStatusColor = () => {
   return document.documentElement.classList.contains("dark")
