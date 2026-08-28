@@ -167,7 +167,7 @@ function renderRecurringTransactionsList() {
     const listItem = document.createElement("li");
     listItem.classList.add("recurring-transaction-item");
     const info = document.createElement("span");
-    info.textContent = `${transaction.description} - $${Number(transaction.amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${transaction.recurrenceInterval})`;
+    info.textContent = `${transaction.description} - $${Number(transaction.amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${transaction.occurrences})`;
     const deleteBtn = document.createElement("button");
     deleteBtn.textContent = "Delete";
     deleteBtn.className = "action-btn delete";

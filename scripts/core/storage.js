@@ -50,9 +50,21 @@ export function getTransactions() {
 
 export function getRecurringTransactions() {
   const allTransactions = getTransactions();
-  return allTransactions.filter(
-    (transaction) => transaction.isRecurring && transaction.recurrenceInterval,
+  const recurring = allTransactions.filter(
+    (transaction) => transaction.isRecurring
   );
+
+  let loggedDescriptions = new Set();
+  recurring.forEach((transaction) => {
+    // Log recurring transaction once with the amount of times it has occured
+    if (!loggedDescriptions.has(transaction.description)) {
+      const occurrences = allTransactions.filter(t => t.isRecurring && t.description === transaction.description).length;
+      console.log(`Recurring transaction: ${transaction.description}, occurred ${occurrences} times`);
+      loggedDescriptions.add(JSON.stringify({description: transaction.description, occurrences, amount: transaction.amount}));
+    }
+  });
+  console.log("Logged recurring transaction descriptions:", Array.from(loggedDescriptions).map(JSON.parse ));
+  return Array.from(loggedDescriptions).map(JSON.parse);
 }
 
 export function getGoals() {
